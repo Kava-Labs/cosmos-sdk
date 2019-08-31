@@ -8,9 +8,11 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/crypto/ed25519"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
+	tmtime "github.com/tendermint/tendermint/types/time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/cosmos/cosmos-sdk/x/auth"
+	authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
 	"github.com/cosmos/cosmos-sdk/x/supply"
 )
 
@@ -23,18 +25,18 @@ func TestGenesisAccountValidate(t *testing.T) {
 	}{
 		{
 			"valid account",
-			NewGenesisAccountRaw(addr, sdk.NewCoins(), sdk.NewCoins(), 0, 0, "", ""),
+			NewGenesisAccountRaw(addr, sdk.NewCoins(), sdk.NewCoins(), 0, 0, authexported.VestingPeriods{}, "", ""),
 			nil,
 		},
 		{
 			"valid module account",
-			NewGenesisAccountRaw(addr, sdk.NewCoins(), sdk.NewCoins(), 0, 0, "mint", supply.Minter),
+			NewGenesisAccountRaw(addr, sdk.NewCoins(), sdk.NewCoins(), 0, 0, authexported.VestingPeriods{}, "mint", supply.Minter),
 			nil,
 		},
 		{
 			"invalid vesting amount",
 			NewGenesisAccountRaw(addr, sdk.NewCoins(sdk.NewInt64Coin("stake", 50)),
-				sdk.NewCoins(sdk.NewInt64Coin("stake", 100)), 0, 0, "", ""),
+				sdk.NewCoins(sdk.NewInt64Coin("stake", 100)), 0, 0, authexported.VestingPeriods{}, "", ""),
 			errors.New("vesting amount cannot be greater than total amount"),
 		},
 		{
@@ -42,18 +44,24 @@ func TestGenesisAccountValidate(t *testing.T) {
 			NewGenesisAccountRaw(addr,
 				sdk.NewCoins(sdk.NewInt64Coin("uatom", 50), sdk.NewInt64Coin("eth", 50)),
 				sdk.NewCoins(sdk.NewInt64Coin("uatom", 100), sdk.NewInt64Coin("eth", 20)),
-				0, 0, "", ""),
+				0, 0, authexported.VestingPeriods{}, "", ""),
 			errors.New("vesting amount cannot be greater than total amount"),
 		},
 		{
 			"invalid vesting times",
 			NewGenesisAccountRaw(addr, sdk.NewCoins(sdk.NewInt64Coin("stake", 50)),
-				sdk.NewCoins(sdk.NewInt64Coin("stake", 50)), 1654668078, 1554668078, "", ""),
+				sdk.NewCoins(sdk.NewInt64Coin("stake", 50)), 1654668078, 1554668078, authexported.VestingPeriods{}, "", ""),
 			errors.New("vesting start-time cannot be before end-time"),
 		},
 		{
+			"vesting periods do not match end time",
+			NewGenesisAccountRaw(addr, sdk.NewCoins(sdk.NewInt64Coin("stake", 50)),
+				sdk.NewCoins(sdk.NewInt64Coin("stake", 50)), 1654668078, 1654669078, authexported.VestingPeriods{authexported.VestingPeriod{PeriodLength: int64(2000), VestingAmount: sdk.Coins{sdk.NewInt64Coin("stake", 50)}}}, "", ""),
+			errors.New("vesting end time does not match length of all vesting periods"),
+		},
+		{
 			"invalid module account name",
-			NewGenesisAccountRaw(addr, sdk.NewCoins(), sdk.NewCoins(), 0, 0, " ", ""),
+			NewGenesisAccountRaw(addr, sdk.NewCoins(), sdk.NewCoins(), 0, 0, authexported.VestingPeriods{}, " ", ""),
 			errors.New("module account name cannot be blank"),
 		},
 	}
@@ -86,6 +94,22 @@ func TestToAccount(t *testing.T) {
 	acc = genAcc.ToAccount()
 	require.IsType(t, &authtypes.ContinuousVestingAccount{}, acc)
 	require.Equal(t, vacc, acc.(*authtypes.ContinuousVestingAccount))
+
+	// periodic vesting account
+	now := tmtime.Now()
+	periods := authexported.VestingPeriods{
+		authexported.VestingPeriod{int64(12 * 60 * 60), sdk.Coins{sdk.NewInt64Coin("fee", 500), sdk.NewInt64Coin("stake", 50)}},
+		authexported.VestingPeriod{int64(6 * 60 * 60), sdk.Coins{sdk.NewInt64Coin("fee", 250), sdk.NewInt64Coin("stake", 25)}},
+		authexported.VestingPeriod{int64(6 * 60 * 60), sdk.Coins{sdk.NewInt64Coin("fee", 250), sdk.NewInt64Coin("stake", 25)}},
+	}
+	pacc := auth.NewPeriodicVestingAccount(
+		&authAcc, now.Unix(), periods,
+	)
+	genAcc, err = NewGenesisAccountI(pacc)
+	require.NoError(t, err)
+	acc = genAcc.ToAccount()
+	require.IsType(t, &auth.PeriodicVestingAccount{}, acc)
+	require.Equal(t, pacc, acc.(*auth.PeriodicVestingAccount))
 
 	// module account
 	macc := supply.NewEmptyModuleAccount("mint", supply.Minter)

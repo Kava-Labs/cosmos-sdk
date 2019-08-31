@@ -467,6 +467,160 @@ func (cva *ContinuousVestingAccount) GetEndTime() int64 {
 	return cva.EndTime
 }
 
+// GetVestingPeriods returns empty since a continuous vesting account has no vesting periods.
+func (cva *ContinuousVestingAccount) GetVestingPeriods() exported.VestingPeriods {
+	return exported.VestingPeriods{}
+}
+
+//-----------------------------------------------------------------------------
+// Continuous Vesting Account
+
+var _ exported.VestingAccount = (*PeriodicVestingAccount)(nil)
+
+// PeriodicVestingAccount implements the VestingAccount interface. It
+// periodically vests by unlocking coins during each specified period
+type PeriodicVestingAccount struct {
+	*ContinuousVestingAccount
+	VestingPeriods exported.VestingPeriods // the vesting schedule
+}
+
+// NewPeriodicVestingAccountRaw creates a new PeriodicVestingAccount object from BaseVestingAccount
+func NewPeriodicVestingAccountRaw(bva *BaseVestingAccount,
+	startTime int64, periods exported.VestingPeriods) *PeriodicVestingAccount {
+
+	cva := &ContinuousVestingAccount{
+		StartTime:          startTime,
+		BaseVestingAccount: bva,
+	}
+	return &PeriodicVestingAccount{
+		ContinuousVestingAccount: cva,
+		VestingPeriods:           periods,
+	}
+}
+
+// NewPeriodicVestingAccount returns a new PeriodicVestingAccount
+func NewPeriodicVestingAccount(
+	baseAcc *BaseAccount, StartTime int64, periods exported.VestingPeriods) *PeriodicVestingAccount {
+
+	endTime := StartTime
+	for _, p := range periods {
+		endTime += p.PeriodLength
+	}
+	baseVestingAcc := &BaseVestingAccount{
+		BaseAccount:     baseAcc,
+		OriginalVesting: baseAcc.Coins,
+		EndTime:         endTime,
+	}
+
+	cva := &ContinuousVestingAccount{
+		StartTime:          StartTime,
+		BaseVestingAccount: baseVestingAcc,
+	}
+
+	return &PeriodicVestingAccount{
+		ContinuousVestingAccount: cva,
+		VestingPeriods:           periods,
+	}
+}
+
+func (pva PeriodicVestingAccount) String() string {
+	var pubkey string
+
+	if pva.PubKey != nil {
+		pubkey = sdk.MustBech32ifyAccPub(pva.PubKey)
+	}
+
+	return fmt.Sprintf(`Periodic Vesting Account:
+  Address:          %s
+  Pubkey:           %s
+  Coins:            %s
+  AccountNumber:    %d
+  Sequence:         %d
+  OriginalVesting:  %s
+  DelegatedFree:    %s
+  DelegatedVesting: %s
+	StartTime:        %d
+	End Time: 				%d
+  VestingPeriods:          %s `,
+		pva.Address, pubkey, pva.Coins, pva.AccountNumber, pva.Sequence,
+		pva.OriginalVesting, pva.DelegatedFree, pva.DelegatedVesting,
+		pva.StartTime, pva.EndTime, pva.VestingPeriods,
+	)
+}
+
+// GetVestedCoins returns the total number of vested coins. If no coins are vested,
+// nil is returned.
+func (pva PeriodicVestingAccount) GetVestedCoins(blockTime time.Time) sdk.Coins {
+	var vestedCoins sdk.Coins
+
+	// We must handle the case where the start time for a vesting account has
+	// been set into the future or when the start of the chain is not exactly
+	// known.
+	if blockTime.Unix() <= pva.StartTime {
+		return vestedCoins
+	} else if blockTime.Unix() >= pva.EndTime {
+		return pva.OriginalVesting
+	}
+
+	// track the start time of the next period
+	currentPeriodStartTime := pva.StartTime
+	numberPeriods := len(pva.VestingPeriods)
+	for i := 0; i < numberPeriods; i++ {
+		x := blockTime.Unix() - currentPeriodStartTime
+		// fmt.Printf(`Current Period: %v
+		// 	Current Period Start Time: %v
+		// 	Current value of x: %v
+		// 	Current Period Length: %v
+		// 	`, i, currentPeriodStartTime, x, pva.VestingPeriods[i].PeriodLength)
+		if x >= pva.VestingPeriods[i].PeriodLength {
+			// fmt.Printf(`
+			// Adding some coins for period %v
+			// `, i)
+			vestedCoins = vestedCoins.Add(pva.VestingPeriods[i].VestingAmount)
+			// Update the start time of the next period
+			currentPeriodStartTime += pva.VestingPeriods[i].PeriodLength
+		} else {
+			break
+		}
+	}
+	return vestedCoins
+}
+
+// GetVestingCoins returns the total number of vesting coins. If no coins are
+// vesting, nil is returned.
+func (pva PeriodicVestingAccount) GetVestingCoins(blockTime time.Time) sdk.Coins {
+	return pva.OriginalVesting.Sub(pva.GetVestedCoins(blockTime))
+}
+
+// SpendableCoins returns the total number of spendable coins per denom for a
+// periodic vesting account.
+func (pva PeriodicVestingAccount) SpendableCoins(blockTime time.Time) sdk.Coins {
+	return pva.spendableCoins(pva.GetVestingCoins(blockTime))
+}
+
+// TrackDelegation tracks a desired delegation amount by setting the appropriate
+// values for the amount of delegated vesting, delegated free, and reducing the
+// overall amount of base coins.
+func (pva *PeriodicVestingAccount) TrackDelegation(blockTime time.Time, amount sdk.Coins) {
+	pva.trackDelegation(pva.GetVestingCoins(blockTime), amount)
+}
+
+// GetStartTime returns the time when vesting starts for a periodic vesting
+// account.
+func (pva *PeriodicVestingAccount) GetStartTime() int64 {
+	return pva.StartTime
+}
+
+// GetEndTime returns the time when vesting ends for a periodic vesting account.
+func (pva *PeriodicVestingAccount) GetEndTime() int64 {
+	return pva.EndTime
+}
+
+// GetVestingPeriods returns vesting periods associated with periodic vesting account.
+func (pva *PeriodicVestingAccount) GetVestingPeriods() exported.VestingPeriods {
+	return pva.VestingPeriods
+}
+
 //-----------------------------------------------------------------------------
 // Delayed Vesting Account
 
@@ -534,4 +688,9 @@ func (dva *DelayedVestingAccount) GetStartTime() int64 {
 // GetEndTime returns the time when vesting ends for a delayed vesting account.
 func (dva *DelayedVestingAccount) GetEndTime() int64 {
 	return dva.EndTime
+}
+
+// GetVestingPeriods returns empty since a continuous vesting account has no vesting periods.
+func (dva *DelayedVestingAccount) GetVestingPeriods() exported.VestingPeriods {
+	return exported.VestingPeriods{}
 }

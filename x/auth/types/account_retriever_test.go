@@ -10,7 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/tests/mocks"
 )
 
-var errFoo = errors.New("dummy")
+var errDummy = errors.New("dummy")
 
 func TestAccountRetriever(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
@@ -23,18 +23,18 @@ func TestAccountRetriever(t *testing.T) {
 	require.NoError(t, err)
 
 	mockNodeQuerier.EXPECT().QueryWithData(gomock.Eq("custom/acc/account"),
-		gomock.Eq(bs)).Return(nil, int64(0), errFoo).Times(1)
+		gomock.Eq(bs)).Return(nil, int64(0), errDummy).Times(1)
 	_, err = accRetr.GetAccount(addr)
 	require.Error(t, err)
 
 	mockNodeQuerier.EXPECT().QueryWithData(gomock.Eq("custom/acc/account"),
-		gomock.Eq(bs)).Return(nil, int64(0), errFoo).Times(1)
+		gomock.Eq(bs)).Return(nil, int64(0), errDummy).Times(1)
 	n, s, err := accRetr.GetAccountNumberSequence(addr)
 	require.Error(t, err)
 	require.Equal(t, uint64(0), n)
 	require.Equal(t, uint64(0), s)
 
 	mockNodeQuerier.EXPECT().QueryWithData(gomock.Eq("custom/acc/account"),
-		gomock.Eq(bs)).Return(nil, int64(0), errFoo).Times(1)
+		gomock.Eq(bs)).Return(nil, int64(0), errDummy).Times(1)
 	require.Error(t, accRetr.EnsureExists(addr))
 }

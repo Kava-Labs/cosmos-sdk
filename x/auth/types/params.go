@@ -63,11 +63,11 @@ func ParamKeyTable() subspace.KeyTable {
 // nolint
 func (p *Params) ParamSetPairs() subspace.ParamSetPairs {
 	return subspace.ParamSetPairs{
-		{KeyMaxMemoCharacters, &p.MaxMemoCharacters},
-		{KeyTxSigLimit, &p.TxSigLimit},
-		{KeyTxSizeCostPerByte, &p.TxSizeCostPerByte},
-		{KeySigVerifyCostED25519, &p.SigVerifyCostED25519},
-		{KeySigVerifyCostSecp256k1, &p.SigVerifyCostSecp256k1},
+		{Key: KeyMaxMemoCharacters, Value: &p.MaxMemoCharacters},
+		{Key: KeyTxSigLimit, Value: &p.TxSigLimit},
+		{Key: KeyTxSizeCostPerByte, Value: &p.TxSizeCostPerByte},
+		{Key: KeySigVerifyCostED25519, Value: &p.SigVerifyCostED25519},
+		{Key: KeySigVerifyCostSecp256k1, Value: &p.SigVerifyCostSecp256k1},
 	}
 }
 

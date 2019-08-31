@@ -2,6 +2,8 @@ package exported
 
 import (
 	"time"
+	"fmt"
+	"strings"
 
 	"github.com/tendermint/tendermint/crypto"
 
@@ -56,4 +58,31 @@ type VestingAccount interface {
 	GetOriginalVesting() sdk.Coins
 	GetDelegatedFree() sdk.Coins
 	GetDelegatedVesting() sdk.Coins
+
+	GetVestingPeriods() VestingPeriods
+}
+
+// VestingPeriod defines a length of time and amount of coins that will vest
+type VestingPeriod struct {
+	PeriodLength  int64     // length of the period, in seconds
+	VestingAmount sdk.Coins // amount of coins vesting during this period
+}
+
+// VestingPeriods stores all vesting periods passed as part of a PeriodicVestingAccount
+type VestingPeriods []VestingPeriod
+
+// String VestingPeriod implements stringer interface
+func (p VestingPeriod) String() string {
+	return fmt.Sprintf(`Period Length: %d
+	VestingAmount: %s`, p.PeriodLength, p.VestingAmount)
+}
+
+// String VestingPeriods implements stringer interface
+func (vp VestingPeriods) String() string {
+	var periodsListString []string
+	for _, period := range vp {
+		periodsListString = append(periodsListString, period.String())
+	}
+	return strings.TrimSpace(fmt.Sprintf(`Vesting Periods:
+		%s`, strings.Join(periodsListString, ", ")))
 }

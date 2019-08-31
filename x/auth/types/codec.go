@@ -16,7 +16,7 @@ func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(StdTx{}, "cosmos-sdk/StdTx", nil)
 }
 
-// module wide codec
+// ModuleCdc module wide codec
 var ModuleCdc *codec.Codec
 
 func init() {

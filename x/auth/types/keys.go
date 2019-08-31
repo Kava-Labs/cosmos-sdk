@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	// module name
+	// ModuleName name used throughout the module
 	ModuleName = "auth"
 
 	// StoreKey is string representation of the store key for auth
@@ -22,7 +22,7 @@ var (
 	// AddressStoreKeyPrefix prefix for account-by-address store
 	AddressStoreKeyPrefix = []byte{0x01}
 
-	// param key for global account number
+	// GlobalAccountNumberKey param key for global account number
 	GlobalAccountNumberKey = []byte("globalAccountNumber")
 )
 

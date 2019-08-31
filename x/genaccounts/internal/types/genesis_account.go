@@ -20,12 +20,12 @@ type GenesisAccount struct {
 	AccountNumber uint64         `json:"account_number" yaml:"account_number"`
 
 	// vesting account fields
-	OriginalVesting  sdk.Coins `json:"original_vesting" yaml:"original_vesting"`   // total vesting coins upon initialization
-	DelegatedFree    sdk.Coins `json:"delegated_free" yaml:"delegated_free"`       // delegated vested coins at time of delegation
-	DelegatedVesting sdk.Coins `json:"delegated_vesting" yaml:"delegated_vesting"` // delegated vesting coins at time of delegation
-	StartTime        int64     `json:"start_time" yaml:"start_time"`               // vesting start time (UNIX Epoch time)
-	EndTime          int64     `json:"end_time" yaml:"end_time"`                   // vesting end time (UNIX Epoch time)
-
+	OriginalVesting  sdk.Coins                   `json:"original_vesting" yaml:"original_vesting"`   // total vesting coins upon initialization
+	DelegatedFree    sdk.Coins                   `json:"delegated_free" yaml:"delegated_free"`       // delegated vested coins at time of delegation
+	DelegatedVesting sdk.Coins                   `json:"delegated_vesting" yaml:"delegated_vesting"` // delegated vesting coins at time of delegation
+	StartTime        int64                       `json:"start_time" yaml:"start_time"`               // vesting start time (UNIX Epoch time)
+	EndTime          int64                       `json:"end_time" yaml:"end_time"`                   // vesting end time (UNIX Epoch time)
+	VestingPeriods   authexported.VestingPeriods `json:"vesting_periods" yaml:"vesting_periods"`     // custom vesting schedule
 	// module account fields
 	ModuleName        string   `json:"module_name" yaml:"module_name"`               // name of the module account
 	ModulePermissions []string `json:"module_permissions" yaml:"module_permissions"` // permissions of module account
@@ -40,6 +40,15 @@ func (ga GenesisAccount) Validate() error {
 		if ga.StartTime >= ga.EndTime {
 			return errors.New("vesting start-time cannot be before end-time")
 		}
+		if len(ga.VestingPeriods) > 0 {
+			endTime := ga.StartTime
+			for _, p := range ga.VestingPeriods {
+				endTime += p.PeriodLength
+			}
+			if endTime != ga.EndTime {
+				return errors.New("vesting end time does not match length of all vesting periods")
+			}
+		}
 	}
 
 	// don't allow blank (i.e just whitespaces) on the module name
@@ -53,6 +62,7 @@ func (ga GenesisAccount) Validate() error {
 // NewGenesisAccountRaw creates a new GenesisAccount object
 func NewGenesisAccountRaw(address sdk.AccAddress, coins,
 	vestingAmount sdk.Coins, vestingStartTime, vestingEndTime int64,
+	vestingPeriods authexported.VestingPeriods,
 	module string, permissions ...string) GenesisAccount {
 
 	return GenesisAccount{
@@ -65,6 +75,7 @@ func NewGenesisAccountRaw(address sdk.AccAddress, coins,
 		DelegatedVesting:  sdk.Coins{}, // ignored
 		StartTime:         vestingStartTime,
 		EndTime:           vestingEndTime,
+		VestingPeriods:    vestingPeriods,
 		ModuleName:        module,
 		ModulePermissions: permissions,
 	}
@@ -100,6 +111,7 @@ func NewGenesisAccountI(acc authexported.Account) (GenesisAccount, error) {
 		gacc.DelegatedVesting = acc.GetDelegatedVesting()
 		gacc.StartTime = acc.GetStartTime()
 		gacc.EndTime = acc.GetEndTime()
+		gacc.VestingPeriods = acc.GetVestingPeriods()
 	case supplyexported.ModuleAccountI:
 		gacc.ModuleName = acc.GetName()
 		gacc.ModulePermissions = acc.GetPermissions()
@@ -120,6 +132,8 @@ func (ga *GenesisAccount) ToAccount() authexported.Account {
 		)
 
 		switch {
+		case len(ga.VestingPeriods) > 0:
+			return auth.NewPeriodicVestingAccountRaw(baseVestingAcc, ga.StartTime, ga.VestingPeriods)
 		case ga.StartTime != 0 && ga.EndTime != 0:
 			return authtypes.NewContinuousVestingAccountRaw(baseVestingAcc, ga.StartTime)
 		case ga.EndTime != 0:
@@ -137,10 +151,10 @@ func (ga *GenesisAccount) ToAccount() authexported.Account {
 	return bacc
 }
 
-// GenesisAccounts defines a set of genesis account
+// GenesisAccounts type alias for array of gensis accounts__________________________________
 type GenesisAccounts []GenesisAccount
 
-// Contains checks if a set of genesis accounts contain an address
+// Contains check if genesis accounts contain an address
 func (gaccs GenesisAccounts) Contains(acc sdk.AccAddress) bool {
 	for _, gacc := range gaccs {
 		if gacc.Address.Equals(acc) {

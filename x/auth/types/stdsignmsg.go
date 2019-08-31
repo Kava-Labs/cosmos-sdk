@@ -16,7 +16,7 @@ type StdSignMsg struct {
 	Memo          string    `json:"memo" yaml:"memo"`
 }
 
-// get message bytes
+// Bytes get message bytes
 func (msg StdSignMsg) Bytes() []byte {
 	return StdSignBytes(msg.ChainID, msg.AccountNumber, msg.Sequence, msg.Fee, msg.Msgs, msg.Memo)
 }

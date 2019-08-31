@@ -27,6 +27,7 @@ type StdTx struct {
 	Memo       string         `json:"memo" yaml:"memo"`
 }
 
+// NewStdTx returns a new StdTx
 func NewStdTx(msgs []sdk.Msg, fee StdFee, sigs []StdSignature, memo string) StdTx {
 	return StdTx{
 		Msgs:       msgs,
