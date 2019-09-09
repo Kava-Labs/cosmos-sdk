@@ -16,6 +16,7 @@ import (
 // BaseAccount
 
 var _ exported.Account = (*BaseAccount)(nil)
+var _ GenesisAccount = (*BaseAccount)(nil)
 
 // BaseAccount - a base account structure.
 // This can be extended by embedding within in your AppAccount.
@@ -134,6 +135,11 @@ func (acc *BaseAccount) SetSequence(seq uint64) error {
 // this is simply the base coins.
 func (acc *BaseAccount) SpendableCoins(_ time.Time) sdk.Coins {
 	return acc.GetCoins()
+}
+
+// Validate returns an error if the account contains unacceptable values. This implements the GenesisAccount interface.
+func (acc BaseAccount) Validate() error {
+	return nil
 }
 
 // MarshalYAML returns the YAML representation of an account.
@@ -350,6 +356,7 @@ func (bva BaseVestingAccount) GetDelegatedVesting() sdk.Coins {
 // Continuous Vesting Account
 
 var _ exported.VestingAccount = (*ContinuousVestingAccount)(nil)
+var _ GenesisAccount = (*ContinuousVestingAccount)(nil)
 
 // ContinuousVestingAccount implements the VestingAccount interface. It
 // continuously vests by unlocking coins linearly with respect to time.
@@ -467,10 +474,28 @@ func (cva *ContinuousVestingAccount) GetEndTime() int64 {
 	return cva.EndTime
 }
 
+// Validate returns an error if the account contains unacceptable values. This implements the GenesisAccount interface.
+// check for negatives in times?
+func (cva ContinuousVestingAccount) Validate() error {
+	if cva.EndTime == 0 {
+		return fmt.Errorf("missing end time for vesting account; address: %s", cva.Address)
+	}
+	if cva.StartTime >= cva.EndTime {
+		return fmt.Errorf(
+			"vesting start time must before end time; address: %s, start: %s, end: %s",
+			cva.Address,
+			time.Unix(cva.StartTime, 0).UTC().Format(time.RFC3339),
+			time.Unix(cva.EndTime, 0).UTC().Format(time.RFC3339),
+		)
+	}
+	return nil
+}
+
 //-----------------------------------------------------------------------------
 // Delayed Vesting Account
 
 var _ exported.VestingAccount = (*DelayedVestingAccount)(nil)
+var _ GenesisAccount = (*DelayedVestingAccount)(nil)
 
 // DelayedVestingAccount implements the VestingAccount interface. It vests all
 // coins after a specific time, but non prior. In other words, it keeps them
@@ -534,4 +559,12 @@ func (dva *DelayedVestingAccount) GetStartTime() int64 {
 // GetEndTime returns the time when vesting ends for a delayed vesting account.
 func (dva *DelayedVestingAccount) GetEndTime() int64 {
 	return dva.EndTime
+}
+
+// Validate returns an error if the account contains unacceptable values. This implements the GenesisAccount interface.
+func (dva DelayedVestingAccount) Validate() error {
+	if dva.EndTime == 0 {
+		return fmt.Errorf("missing end time for vesting account; address: %s", dva.Address)
+	}
+	return nil
 }

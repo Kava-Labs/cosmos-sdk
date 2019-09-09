@@ -8,6 +8,7 @@ import (
 // RegisterCodec registers concrete types on the codec
 func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterInterface((*exported.Account)(nil), nil)
+	cdc.RegisterInterface((*GenesisAccount)(nil), nil)
 	cdc.RegisterConcrete(&BaseAccount{}, "cosmos-sdk/Account", nil)
 	cdc.RegisterInterface((*exported.VestingAccount)(nil), nil)
 	cdc.RegisterConcrete(&BaseVestingAccount{}, "cosmos-sdk/BaseVestingAccount", nil)
@@ -23,5 +24,11 @@ func init() {
 	ModuleCdc = codec.New()
 	RegisterCodec(ModuleCdc)
 	codec.RegisterCrypto(ModuleCdc)
-	ModuleCdc.Seal()
+	// codec not sealed to allow external types to be registered
+}
+
+// RegisterAccountTypeCodec registers an external account type on the internal ModuleCdc.
+// This allows external account types to be correctly Amino encoded and decoded.
+func RegisterAccountTypeCodec(o interface{}, name string) {
+	ModuleCdc.RegisterConcrete(o, name, nil)
 }
