@@ -478,12 +478,11 @@ func (cva *ContinuousVestingAccount) GetEndTime() int64 {
 // check for negatives in times?
 func (cva ContinuousVestingAccount) Validate() error {
 	if cva.EndTime == 0 {
-		return fmt.Errorf("missing end time for vesting account; address: %s", cva.Address)
+		return errors.New("missing end time for vesting account")
 	}
 	if cva.StartTime >= cva.EndTime {
 		return fmt.Errorf(
-			"vesting start time must before end time; address: %s, start: %s, end: %s",
-			cva.Address,
+			"vesting start time must be before end time; start: %s, end: %s",
 			time.Unix(cva.StartTime, 0).UTC().Format(time.RFC3339),
 			time.Unix(cva.EndTime, 0).UTC().Format(time.RFC3339),
 		)
@@ -564,7 +563,7 @@ func (dva *DelayedVestingAccount) GetEndTime() int64 {
 // Validate returns an error if the account contains unacceptable values. This implements the GenesisAccount interface.
 func (dva DelayedVestingAccount) Validate() error {
 	if dva.EndTime == 0 {
-		return fmt.Errorf("missing end time for vesting account; address: %s", dva.Address)
+		return errors.New("missing end time for vesting account")
 	}
 	return nil
 }
