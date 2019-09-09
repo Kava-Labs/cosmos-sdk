@@ -81,6 +81,7 @@ func RandomizedGenState(simState *module.SimulationState) {
 	authGenesis := types.NewGenesisState(
 		types.NewParams(maxMemoChars, txSigLimit, txSizeCostPerByte,
 			sigVerifyCostED25519, sigVerifyCostSECP256K1),
+		[]types.GenesisAccount{}, // TODO
 	)
 
 	fmt.Printf("Selected randomly generated auth parameters:\n%s\n", codec.MustMarshalJSONIndent(simState.Cdc, authGenesis.Params))

@@ -479,3 +479,103 @@ func TestTrackUndelegationDelVestingAcc(t *testing.T) {
 	require.Equal(t, sdk.Coins{sdk.NewInt64Coin(stakeDenom, 25)}, dva.DelegatedVesting)
 	require.Equal(t, sdk.Coins{sdk.NewInt64Coin(feeDenom, 1000), sdk.NewInt64Coin(stakeDenom, 75)}, dva.GetCoins())
 }
+
+func TestContinuousVestingAccountValidate(t *testing.T) {
+	_, _, addr := KeyTestPubAddr()
+	testCases := []struct {
+		name       string
+		account    GenesisAccount
+		expectPass bool
+	}{
+		// TODO test cases when loading from halfway through vesting
+		{
+			"valid account",
+			NewContinuousVestingAccountRaw(
+				NewBaseVestingAccount(
+					NewBaseAccount(addr, sdk.NewCoins(), nil, 0, 0),
+					sdk.NewCoins(),
+					sdk.NewCoins(),
+					sdk.NewCoins(),
+					223456),
+				123456),
+			true,
+		},
+		{
+			"missing end time",
+			NewContinuousVestingAccountRaw(
+				NewBaseVestingAccount(
+					NewBaseAccount(addr, sdk.NewCoins(), nil, 0, 0),
+					sdk.NewCoins(),
+					sdk.NewCoins(),
+					sdk.NewCoins(),
+					0),
+				0),
+			false,
+		},
+		{
+			"start time before end ",
+			NewContinuousVestingAccountRaw(
+				NewBaseVestingAccount(
+					NewBaseAccount(addr, sdk.NewCoins(), nil, 0, 0),
+					sdk.NewCoins(),
+					sdk.NewCoins(),
+					sdk.NewCoins(),
+					123456),
+				223456),
+			false,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.account.Validate()
+			if tc.expectPass {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+			}
+		})
+	}
+}
+
+func TestDelayedVestingAccountValidate(t *testing.T) {
+	_, _, addr := KeyTestPubAddr()
+	testCases := []struct {
+		name       string
+		account    GenesisAccount
+		expectPass bool
+	}{
+		// TODO test cases when loading from halfway through vesting
+		{
+			"valid account",
+			NewDelayedVestingAccountRaw(
+				NewBaseVestingAccount(
+					NewBaseAccount(addr, sdk.NewCoins(), nil, 0, 0),
+					sdk.NewCoins(),
+					sdk.NewCoins(),
+					sdk.NewCoins(),
+					123456)),
+			true,
+		},
+		{
+			"missing end time",
+			NewDelayedVestingAccountRaw(
+				NewBaseVestingAccount(
+					NewBaseAccount(addr, sdk.NewCoins(), nil, 0, 0),
+					sdk.NewCoins(),
+					sdk.NewCoins(),
+					sdk.NewCoins(),
+					0)),
+			false,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.account.Validate()
+			if tc.expectPass {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+			}
+		})
+	}
+}
