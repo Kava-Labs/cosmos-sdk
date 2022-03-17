@@ -12,7 +12,7 @@ require (
 	github.com/cosmos/btcutil v1.0.4
 	github.com/cosmos/cosmos-proto v1.0.0-alpha6
 	github.com/cosmos/cosmos-sdk/db v0.0.0
-	github.com/cosmos/cosmos-sdk/errors v1.0.0-beta.2
+	github.com/cosmos/cosmos-sdk/errors v1.0.0-beta.4
 	github.com/cosmos/cosmos-sdk/x/group v0.0.0-00010101000000-000000000000
 	github.com/cosmos/go-bip39 v1.0.0
 	github.com/cosmos/iavl v0.17.3
@@ -51,7 +51,7 @@ require (
 	github.com/tendermint/tm-db v0.6.6
 	golang.org/x/crypto v0.0.0-20211215165025-cf75a172585e
 	google.golang.org/genproto v0.0.0-20211208223120-3a66f561d7aa
-	google.golang.org/grpc v1.43.0
+	google.golang.org/grpc v1.44.0
 	google.golang.org/protobuf v1.27.1
 	sigs.k8s.io/yaml v1.3.0
 )
