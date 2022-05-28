@@ -7,7 +7,7 @@ import (
 
 // NewAccountWithAddress implements AccountKeeperI.
 func (ak AccountKeeper) NewAccountWithAddress(ctx sdk.Context, addr sdk.AccAddress) types.AccountI {
-	acc := ak.proto()
+	acc := ak.proto(ctx.BlockHeight())
 	err := acc.SetAddress(addr)
 	if err != nil {
 		panic(err)

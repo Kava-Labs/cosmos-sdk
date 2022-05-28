@@ -47,6 +47,8 @@ type AccountKeeperI interface {
 	GetNextAccountNumber(sdk.Context) uint64
 }
 
+type ProtoAccountConstructor func(currentBlockHeight int64) types.AccountI
+
 // AccountKeeper encodes/decodes accounts using the go-amino (binary)
 // encoding/decoding library.
 type AccountKeeper struct {
@@ -56,7 +58,7 @@ type AccountKeeper struct {
 	permAddrs     map[string]types.PermissionsForAddress
 
 	// The prototypical AccountI constructor.
-	proto func() types.AccountI
+	proto ProtoAccountConstructor
 }
 
 var _ AccountKeeperI = &AccountKeeper{}
@@ -68,7 +70,7 @@ var _ AccountKeeperI = &AccountKeeper{}
 // and don't have to fit into any predefined structure. This auth module does not use account permissions internally, though other modules
 // may use auth.Keeper to access the accounts permissions map.
 func NewAccountKeeper(
-	cdc codec.BinaryCodec, key sdk.StoreKey, paramstore paramtypes.Subspace, proto func() types.AccountI,
+	cdc codec.BinaryCodec, key sdk.StoreKey, paramstore paramtypes.Subspace, proto ProtoAccountConstructor,
 	maccPerms map[string][]string,
 ) AccountKeeper {
 

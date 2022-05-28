@@ -43,7 +43,7 @@ func NewBaseAccount(address sdk.AccAddress, pubKey cryptotypes.PubKey, accountNu
 }
 
 // ProtoBaseAccount - a prototype function for BaseAccount
-func ProtoBaseAccount() AccountI {
+func ProtoBaseAccount(_ int64) AccountI {
 	return &BaseAccount{}
 }
 
