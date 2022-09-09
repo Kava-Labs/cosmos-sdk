@@ -34,6 +34,9 @@ type Keeper struct {
 
 	// Proposal router
 	router types.Router
+
+	// Tally handler for tallying votes. If not provided, the default one will be used.
+	tallyHandler types.TallyHandler
 }
 
 // NewKeeper returns a governance keeper. It handles:
