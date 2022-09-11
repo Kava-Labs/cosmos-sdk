@@ -85,7 +85,7 @@ func (dth DefaultTallyHandler) Tally(ctx sdk.Context, proposal types.Proposal) (
 			return false
 		})
 
-		keeper.deleteVote(ctx, vote.ProposalId, voter)
+		keeper.DeleteVote(ctx, vote.ProposalId, voter)
 		return false
 	})
 
