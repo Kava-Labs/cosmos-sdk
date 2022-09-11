@@ -83,6 +83,11 @@ func (keeper *Keeper) SetHooks(gh types.GovHooks) *Keeper {
 	return keeper
 }
 
+func (keeper *Keeper) SetTallyHandler(th types.TallyHandler) *Keeper {
+	keeper.tallyHandler = th
+	return keeper
+}
+
 // Logger returns a module-specific logger.
 func (keeper Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", "x/"+types.ModuleName)
