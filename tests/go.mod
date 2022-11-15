@@ -7,7 +7,7 @@ require (
 	cosmossdk.io/math v1.0.0-beta.3
 	cosmossdk.io/simapp v0.0.0-20220908203654-84d4bf5accad
 	github.com/cosmos/cosmos-sdk v0.0.0-00010101000000-000000000000
-	github.com/cosmos/gogoproto v1.4.2
+	github.com/cosmos/gogoproto v1.4.3
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.3.0
 	github.com/spf13/cobra v1.6.0
@@ -145,7 +145,7 @@ require (
 	google.golang.org/api v0.81.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20220930163606-c98284e70a91 // indirect
-	google.golang.org/grpc v1.50.0 // indirect
+	google.golang.org/grpc v1.50.1 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
