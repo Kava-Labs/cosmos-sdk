@@ -28,7 +28,6 @@ func (dth DefaultTallyHandler) Tally(
 	ctx sdk.Context,
 	proposal v1.Proposal,
 ) (passes bool, burnDeposits bool, tallyResults v1.TallyResult) {
-	keeper := dth.keeper
 	results := make(map[v1.VoteOption]sdk.Dec)
 	results[v1.OptionYes] = sdk.ZeroDec()
 	results[v1.OptionAbstain] = sdk.ZeroDec()
@@ -39,7 +38,7 @@ func (dth DefaultTallyHandler) Tally(
 	currValidators := make(map[string]v1.ValidatorGovInfo)
 
 	// fetch all the bonded validators, insert them into currValidators
-	keeper.sk.IterateBondedValidatorsByPower(ctx, func(index int64, validator stakingtypes.ValidatorI) (stop bool) {
+	dth.keeper.sk.IterateBondedValidatorsByPower(ctx, func(index int64, validator stakingtypes.ValidatorI) (stop bool) {
 		currValidators[validator.GetOperator().String()] = v1.NewValidatorGovInfo(
 			validator.GetOperator(),
 			validator.GetBondedTokens(),
@@ -51,7 +50,7 @@ func (dth DefaultTallyHandler) Tally(
 		return false
 	})
 
-	keeper.IterateVotes(ctx, proposal.Id, func(vote v1.Vote) bool {
+	dth.keeper.IterateVotes(ctx, proposal.Id, func(vote v1.Vote) bool {
 		// if validator, just record it in the map
 		voter := sdk.MustAccAddressFromBech32(vote.Voter)
 
@@ -62,12 +61,12 @@ func (dth DefaultTallyHandler) Tally(
 		}
 
 		// iterate over all delegations from voter, deduct from any delegated-to validators
-		keeper.sk.IterateDelegations(ctx, voter, func(index int64, delegation stakingtypes.DelegationI) (stop bool) {
+		dth.keeper.sk.IterateDelegations(ctx, voter, func(index int64, delegation stakingtypes.DelegationI) (stop bool) {
 			valAddrStr := delegation.GetValidatorAddr().String()
 
 			if val, ok := currValidators[valAddrStr]; ok {
 				// There is no need to handle the special case that validator address equal to voter address.
-				// Because voter's voting power will tally again even if there will deduct voter's voting power from validator.
+				// Because voter's voting power will tally again even if there will be deduction of voter's voting power from validator.
 				val.DelegatorDeductions = val.DelegatorDeductions.Add(delegation.GetShares())
 				currValidators[valAddrStr] = val
 
@@ -75,7 +74,8 @@ func (dth DefaultTallyHandler) Tally(
 				votingPower := delegation.GetShares().MulInt(val.BondedTokens).Quo(val.DelegatorShares)
 
 				for _, option := range vote.Options {
-					subPower := votingPower.Mul(sdk.MustNewDecFromStr(option.Weight))
+					weight, _ := sdk.NewDecFromStr(option.Weight)
+					subPower := votingPower.Mul(weight)
 					results[option.Option] = results[option.Option].Add(subPower)
 				}
 				totalVotingPower = totalVotingPower.Add(votingPower)
@@ -84,7 +84,7 @@ func (dth DefaultTallyHandler) Tally(
 			return false
 		})
 
-		keeper.DeleteVote(ctx, vote.ProposalId, voter)
+		dth.keeper.DeleteVote(ctx, vote.ProposalId, voter)
 		return false
 	})
 
@@ -98,25 +98,27 @@ func (dth DefaultTallyHandler) Tally(
 		votingPower := sharesAfterDeductions.MulInt(val.BondedTokens).Quo(val.DelegatorShares)
 
 		for _, option := range val.Vote {
-			subPower := votingPower.Mul(sdk.MustNewDecFromStr(option.Weight))
+			weight, _ := sdk.NewDecFromStr(option.Weight)
+			subPower := votingPower.Mul(weight)
 			results[option.Option] = results[option.Option].Add(subPower)
 		}
 		totalVotingPower = totalVotingPower.Add(votingPower)
 	}
 
-	tallyParams := keeper.GetTallyParams(ctx)
+	tallyParams := dth.keeper.GetTallyParams(ctx)
 	tallyResults = v1.NewTallyResultFromMap(results)
 
 	// TODO: Upgrade the spec to cover all of these cases & remove pseudocode.
 	// If there is no staked coins, the proposal fails
-	if keeper.sk.TotalBondedTokens(ctx).IsZero() {
+	if dth.keeper.sk.TotalBondedTokens(ctx).IsZero() {
 		return false, false, tallyResults
 	}
 
 	// If there is not enough quorum of votes, the proposal fails
-	percentVoting := totalVotingPower.Quo(sdk.NewDecFromInt(keeper.sk.TotalBondedTokens(ctx)))
-	if percentVoting.LT(sdk.MustNewDecFromStr(tallyParams.Quorum)) {
-		return false, true, tallyResults
+	percentVoting := totalVotingPower.Quo(sdk.NewDecFromInt(dth.keeper.sk.TotalBondedTokens(ctx)))
+	quorum, _ := sdk.NewDecFromStr(tallyParams.Quorum)
+	if percentVoting.LT(quorum) {
+		return false, false, tallyResults
 	}
 
 	// If no one votes (everyone abstains), proposal fails
@@ -125,12 +127,14 @@ func (dth DefaultTallyHandler) Tally(
 	}
 
 	// If more than 1/3 of voters veto, proposal fails
-	if results[v1.OptionNoWithVeto].Quo(totalVotingPower).GT(sdk.MustNewDecFromStr(tallyParams.VetoThreshold)) {
+	vetoThreshold, _ := sdk.NewDecFromStr(tallyParams.VetoThreshold)
+	if results[v1.OptionNoWithVeto].Quo(totalVotingPower).GT(vetoThreshold) {
 		return false, true, tallyResults
 	}
 
 	// If more than 1/2 of non-abstaining voters vote Yes, proposal passes
-	if results[v1.OptionYes].Quo(totalVotingPower.Sub(results[v1.OptionAbstain])).GT(sdk.MustNewDecFromStr(tallyParams.Threshold)) {
+	threshold, _ := sdk.NewDecFromStr(tallyParams.Threshold)
+	if results[v1.OptionYes].Quo(totalVotingPower.Sub(results[v1.OptionAbstain])).GT(threshold) {
 		return true, false, tallyResults
 	}
 
