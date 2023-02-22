@@ -42,6 +42,9 @@ type Keeper struct {
 	// Msg server router
 	router *baseapp.MsgServiceRouter
 
+	// Tally handler for tallying votes. If not provided, the default one will be used.
+	tallyHandler v1.TallyHandler
+
 	config types.Config
 }
 
@@ -94,6 +97,11 @@ func (keeper *Keeper) SetHooks(gh types.GovHooks) *Keeper {
 
 	keeper.hooks = gh
 
+	return keeper
+}
+
+func (keeper *Keeper) SetTallyHandler(th v1.TallyHandler) *Keeper {
+	keeper.tallyHandler = th
 	return keeper
 }
 
