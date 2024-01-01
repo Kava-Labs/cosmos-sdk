@@ -39,6 +39,9 @@ type Keeper struct {
 	// Msg server router
 	router *baseapp.MsgServiceRouter
 
+	// Tally handler for tallying votes. If not provided, the default one will be used.
+	tallyHandler v1.TallyHandler
+
 	config types.Config
 
 	// the address capable of executing a MsgUpdateParams message. Typically, this
@@ -117,6 +120,11 @@ func (keeper *Keeper) SetLegacyRouter(router v1beta1.Router) {
 	// could create invalid or non-deterministic behavior.
 	router.Seal()
 	keeper.legacyRouter = router
+}
+
+func (keeper *Keeper) SetTallyHandler(th v1.TallyHandler) *Keeper {
+	keeper.tallyHandler = th
+	return keeper
 }
 
 // Logger returns a module-specific logger.
