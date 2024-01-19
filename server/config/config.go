@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"math"
+	"strings"
 
 	"github.com/spf13/viper"
 
@@ -269,7 +270,10 @@ func (c *Config) GetMinGasPrices() sdk.DecCoins {
 		return sdk.DecCoins{}
 	}
 
-	gasPrices, err := sdk.ParseDecCoins(c.MinGasPrices)
+	// replace `;` with `,` to support both `;` and `,` as separators in server config
+	minGasPrices := strings.ReplaceAll(c.MinGasPrices, ";", ",")
+
+	gasPrices, err := sdk.ParseDecCoins(minGasPrices)
 	if err != nil {
 		panic(fmt.Sprintf("invalid minimum gas prices: %v", err))
 	}
