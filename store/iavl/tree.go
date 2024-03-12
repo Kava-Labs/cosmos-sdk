@@ -6,7 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/cosmos/iavl"
 
-	dbm "github.com/tendermint/tm-db"
+	dbm "github.com/cometbft/cometbft-db"
 )
 
 var (

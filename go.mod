@@ -59,7 +59,6 @@ require (
 	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.9.0
 	github.com/tendermint/go-amino v0.16.0
-	github.com/tendermint/tm-db v0.6.7
 	github.com/tidwall/btree v1.6.0
 	golang.org/x/crypto v0.21.0
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9
@@ -93,7 +92,6 @@ require (
 	github.com/cockroachdb/pebble v0.0.0-20230226194802-02d779ffbc46 // indirect
 	github.com/cockroachdb/redact v1.1.5 // indirect
 	github.com/coinbase/rosetta-sdk-go/types v1.0.0 // indirect
-	github.com/cosmos/gorocksdb v1.2.0 // indirect
 	github.com/cosmos/rosetta-sdk-go v0.10.0 // indirect
 	github.com/creachadair/taskgroup v0.3.2 // indirect
 	github.com/danieljoos/wincred v1.1.2 // indirect
