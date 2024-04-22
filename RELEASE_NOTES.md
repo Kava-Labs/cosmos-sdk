@@ -8,6 +8,9 @@ This early monthly patch release fixes [GHSA-86h5-xcpx-cfqc](https://github.com/
 
 We recommended to upgrade to this patch release as soon as possible.
 When upgrading from <= v0.47.9, please ensure that 2/3 of the validator power upgrade to v0.47.10.
+* `secp256r1` keys now implement gogoproto's customtype interface.
+* CLI now throws an error when signing with an incorrect Ledger.
+* Fixing [GHSA-4j93-fm92-rp4m](https://github.com/cosmos/cosmos-sdk/security/advisories/GHSA-4j93-fm92-rp4m) in `x/feegrant` and `x/authz` modules. The upgrade instuctions were provided in the [v0.47.9 release notes](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.47.9).
 
 Curious? Check out the [changelog](https://github.com/cosmos/cosmos-sdk/blob/v0.47.10/CHANGELOG.md) for an exhaustive list of changes or [compare changes](https://github.com/cosmos/cosmos-sdk/compare/v0.47.9...v0.47.10) from last release.
 
