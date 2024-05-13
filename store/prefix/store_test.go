@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	tiavl "github.com/cosmos/iavl"
+	iavldb "github.com/cosmos/iavl/db"
 
 	"github.com/cosmos/cosmos-sdk/store/dbadapter"
 	"github.com/cosmos/cosmos-sdk/store/gaskv"
@@ -92,7 +93,7 @@ func testPrefixStore(t *testing.T, baseStore types.KVStore, prefix []byte) {
 
 func TestIAVLStorePrefix(t *testing.T) {
 	db := wrapper.NewCosmosDB(dbm.NewMemDB())
-	tree := tiavl.NewMutableTree(db, cacheSize, false, log.NewNopLogger())
+	tree := tiavl.NewMutableTree(iavldb.NewWrapper(db), cacheSize, false, log.NewNopLogger())
 	iavlStore := iavl.UnsafeNewStore(tree)
 
 	testPrefixStore(t, iavlStore, []byte("test"))
