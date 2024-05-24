@@ -1,9 +1,12 @@
 module github.com/cosmos/cosmos-sdk
 
-go 1.19
+go 1.21
+
+toolchain go1.21.9
 
 require (
 	cosmossdk.io/errors v1.0.0-beta.7
+	cosmossdk.io/log v1.2.0
 	cosmossdk.io/math v1.0.0-rc.0
 	github.com/99designs/keyring v1.2.1
 	github.com/armon/go-metrics v0.4.1
@@ -14,10 +17,12 @@ require (
 	github.com/coinbase/rosetta-sdk-go v0.7.9
 	github.com/confio/ics23/go v0.9.0
 	github.com/cosmos/btcutil v1.0.5
+	github.com/cosmos/cosmos-db v1.0.0
 	github.com/cosmos/cosmos-proto v1.0.0-alpha7
 	github.com/cosmos/cosmos-sdk/db v1.0.0-beta.1
 	github.com/cosmos/go-bip39 v1.0.0
-	github.com/cosmos/iavl v1.0.0
+	github.com/cosmos/iavl v1.2.0
+	github.com/cosmos/ics23/go v0.10.0
 	github.com/cosmos/ledger-cosmos-go v0.13.1
 	github.com/gogo/gateway v1.1.0
 	github.com/gogo/protobuf v1.3.2
@@ -66,7 +71,6 @@ require (
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	cloud.google.com/go/iam v1.1.2 // indirect
 	cloud.google.com/go/storage v1.30.1 // indirect
-	cosmossdk.io/log v1.2.0 // indirect
 	filippo.io/edwards25519 v1.0.0-rc.1 // indirect
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
 	github.com/ChainSafe/go-schnorrkel v1.0.0 // indirect
@@ -85,10 +89,8 @@ require (
 	github.com/cockroachdb/redact v1.0.8 // indirect
 	github.com/cockroachdb/sentry-go v0.6.1-cockroachdb.2 // indirect
 	github.com/cometbft/cometbft-db v0.9.1 // indirect
-	github.com/cosmos/cosmos-db v1.0.0 // indirect
 	github.com/cosmos/gogoproto v1.4.3 // indirect
 	github.com/cosmos/gorocksdb v1.2.0 // indirect
-	github.com/cosmos/ics23/go v0.10.0 // indirect
 	github.com/creachadair/taskgroup v0.3.2 // indirect
 	github.com/danieljoos/wincred v1.1.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -179,6 +181,10 @@ require (
 replace (
 	// use cosmos fork of keyring
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
+	// Use cometbft fork of tendermint
+	github.com/cometbft/cometbft => github.com/kava-labs/cometbft v0.37.4-kava.1
+	github.com/cometbft/cometbft-db => github.com/kava-labs/cometbft-db v0.9.1-kava.1
+	github.com/cosmos/iavl => github.com/kava-labs/iavl v1.2.0-kava.2
 	// dgrijalva/jwt-go is deprecated and doesn't receive security updates.
 	// TODO: remove it: https://github.com/cosmos/cosmos-sdk/issues/13134
 	github.com/dgrijalva/jwt-go => github.com/golang-jwt/jwt/v4 v4.4.2

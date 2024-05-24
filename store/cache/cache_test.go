@@ -6,6 +6,7 @@ import (
 
 	"cosmossdk.io/log"
 	"github.com/cosmos/iavl"
+	iavldb "github.com/cosmos/iavl/db"
 	"github.com/stretchr/testify/require"
 	dbm "github.com/tendermint/tm-db"
 
@@ -20,7 +21,7 @@ func TestGetOrSetStoreCache(t *testing.T) {
 	mngr := cache.NewCommitKVStoreCacheManager(cache.DefaultCommitKVStoreCacheSize)
 
 	sKey := types.NewKVStoreKey("test")
-	tree := iavl.NewMutableTree(db, 100, false, log.NewNopLogger())
+	tree := iavl.NewMutableTree(iavldb.NewWrapper(db), 100, false, log.NewNopLogger())
 	store := iavlstore.UnsafeNewStore(tree)
 	store2 := mngr.GetStoreCache(sKey, store)
 
@@ -33,7 +34,7 @@ func TestUnwrap(t *testing.T) {
 	mngr := cache.NewCommitKVStoreCacheManager(cache.DefaultCommitKVStoreCacheSize)
 
 	sKey := types.NewKVStoreKey("test")
-	tree := iavl.NewMutableTree(db, 100, false, log.NewNopLogger())
+	tree := iavl.NewMutableTree(iavldb.NewWrapper(db), 100, false, log.NewNopLogger())
 	store := iavlstore.UnsafeNewStore(tree)
 	_ = mngr.GetStoreCache(sKey, store)
 
@@ -46,7 +47,7 @@ func TestStoreCache(t *testing.T) {
 	mngr := cache.NewCommitKVStoreCacheManager(cache.DefaultCommitKVStoreCacheSize)
 
 	sKey := types.NewKVStoreKey("test")
-	tree := iavl.NewMutableTree(db, 100, false, log.NewNopLogger())
+	tree := iavl.NewMutableTree(iavldb.NewWrapper(db), 100, false, log.NewNopLogger())
 	store := iavlstore.UnsafeNewStore(tree)
 	kvStore := mngr.GetStoreCache(sKey, store)
 
