@@ -201,6 +201,8 @@ replace (
 )
 
 retract (
+	// Incorrectly used IAVL v1 in IAVL v0 branch
+	v0.47.10-kava.2
 	// revert fix https://github.com/cosmos/cosmos-sdk/pull/16331
 	v0.46.12
 	// subject to a bug in the group module and gov module migration
