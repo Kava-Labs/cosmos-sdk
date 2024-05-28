@@ -288,7 +288,7 @@ func (rs *Store) loadVersion(ver int64, upgrades *types.StoreUpgrades) error {
 	rs.stores = newStores
 
 	// load any pruned heights we missed from disk to be pruned on the next run
-	if err := rs.pruningManager.LoadSnapshotHeights(rs.db); err != nil {
+	if err := rs.pruningManager.LoadPruningHeights(rs.db); err != nil {
 		return err
 	}
 
@@ -339,7 +339,7 @@ func moveKVStoreData(oldDB types.KVStore, newDB types.KVStore) error {
 // If other strategy, this height is persisted until it is
 // less than <current height> - KeepRecent and <current height> % Interval == 0
 func (rs *Store) PruneSnapshotHeight(height int64) {
-	rs.pruningManager.HandleSnapshotHeight(height)
+	rs.pruningManager.HandleHeightSnapshot(height)
 }
 
 // SetInterBlockCache sets the Store's internal inter-block (persistent) cache.
@@ -594,19 +594,38 @@ func (rs *Store) GetKVStore(key types.StoreKey) types.KVStore {
 }
 
 func (rs *Store) handlePruning(version int64) error {
-	pruneHeight := rs.pruningManager.GetPruningHeight(version)
+	rs.pruningManager.HandleHeight(version - 1) // we should never prune the current version.
+	if !rs.pruningManager.ShouldPruneAtHeight(version) {
+		return nil
+	}
+	rs.logger.Info("prune start", "height", version)
 	defer rs.logger.Info("prune end", "height", version)
-	return rs.PruneStores(pruneHeight)
+	return rs.PruneStores(true, nil)
 }
 
-// PruneStores prunes all history up to the specific height of the multi store.
-func (rs *Store) PruneStores(pruningHeight int64) (err error) {
-	if pruningHeight <= 0 {
-		rs.logger.Debug("pruning skipped, height is less than or equal to 0")
+// PruneStores prunes the specific heights of the multi store.
+// If clearPruningManager is true, the pruning manager will return the pruning heights,
+// and they are appended to the pruningHeights to be pruned.
+func (rs *Store) PruneStores(clearPruningManager bool, pruningHeights []int64) (err error) {
+	if clearPruningManager {
+		heights, err := rs.pruningManager.GetFlushAndResetPruningHeights()
+		if err != nil {
+			return err
+		}
+
+		if len(heights) == 0 {
+			rs.logger.Debug("no heights to be pruned from pruning manager")
+		}
+
+		pruningHeights = append(pruningHeights, heights...)
+	}
+
+	if len(pruningHeights) == 0 {
+		rs.logger.Debug("no heights need to be pruned")
 		return nil
 	}
 
-	rs.logger.Debug("pruning store", "height", pruningHeight)
+	rs.logger.Debug("pruning store", "heights", pruningHeights)
 
 	for key, store := range rs.stores {
 		rs.logger.Debug("pruning store", "key", key) // Also log store.name (a private variable)?
@@ -619,7 +638,7 @@ func (rs *Store) PruneStores(pruningHeight int64) (err error) {
 
 		store = rs.GetCommitKVStore(key)
 
-		err := store.(*iavl.Store).DeleteVersionsTo(pruningHeight)
+		err := store.(*iavl.Store).DeleteVersions(pruningHeights...)
 		if err == nil {
 			continue
 		}
@@ -1003,7 +1022,12 @@ func (rs *Store) RollbackToVersion(target int64) error {
 			// If the store is wrapped with an inter-block cache, we must first unwrap
 			// it to get the underlying IAVL store.
 			store = rs.GetCommitKVStore(key)
-			_, err := store.(*iavl.Store).LoadVersionForOverwriting(target)
+			var err error
+			if rs.lazyLoading {
+				_, err = store.(*iavl.Store).LazyLoadVersionForOverwriting(target)
+			} else {
+				_, err = store.(*iavl.Store).LoadVersionForOverwriting(target)
+			}
 			if err != nil {
 				return err
 			}

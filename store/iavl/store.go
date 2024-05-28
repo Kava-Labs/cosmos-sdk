@@ -6,7 +6,6 @@ import (
 	"io"
 	"time"
 
-	clog "cosmossdk.io/log"
 	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
@@ -18,7 +17,6 @@ import (
 	pruningtypes "github.com/cosmos/cosmos-sdk/store/pruning/types"
 	"github.com/cosmos/cosmos-sdk/store/tracekv"
 	"github.com/cosmos/cosmos-sdk/store/types"
-	"github.com/cosmos/cosmos-sdk/store/wrapper"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/kv"
@@ -54,7 +52,10 @@ func LoadStore(db dbm.DB, logger log.Logger, key types.StoreKey, id types.Commit
 // provided DB. An error is returned if the version fails to load, or if called with a positive
 // version on an empty tree.
 func LoadStoreWithInitialVersion(db dbm.DB, logger log.Logger, key types.StoreKey, id types.CommitID, lazyLoading bool, initialVersion uint64, cacheSize int, disableFastNode bool) (types.CommitKVStore, error) {
-	tree := iavl.NewMutableTree(wrapper.NewCosmosDB(db), cacheSize, disableFastNode, clog.NewNopLogger(), iavl.InitialVersionOption(initialVersion))
+	tree, err := iavl.NewMutableTreeWithOpts(db, cacheSize, &iavl.Options{InitialVersion: initialVersion}, disableFastNode)
+	if err != nil {
+		return nil, err
+	}
 
 	isUpgradeable, err := tree.IsUpgradeable()
 	if err != nil {
@@ -71,7 +72,11 @@ func LoadStoreWithInitialVersion(db dbm.DB, logger log.Logger, key types.StoreKe
 		)
 	}
 
-	_, err = tree.LoadVersion(id.Version)
+	if lazyLoading {
+		_, err = tree.LazyLoadVersion(id.Version)
+	} else {
+		_, err = tree.LoadVersion(id.Version)
+	}
 
 	if err != nil {
 		return nil, err
@@ -82,7 +87,7 @@ func LoadStoreWithInitialVersion(db dbm.DB, logger log.Logger, key types.StoreKe
 	}
 
 	return &Store{
-		tree:   &mutableTree{tree},
+		tree:   tree,
 		logger: logger,
 	}, nil
 }
@@ -95,7 +100,7 @@ func LoadStoreWithInitialVersion(db dbm.DB, logger log.Logger, key types.StoreKe
 // passed into iavl.MutableTree
 func UnsafeNewStore(tree *iavl.MutableTree) *Store {
 	return &Store{
-		tree: &mutableTree{tree},
+		tree: tree,
 	}
 }
 
@@ -137,7 +142,10 @@ func (st *Store) Commit() types.CommitID {
 
 // LastCommitID implements Committer.
 func (st *Store) LastCommitID() types.CommitID {
-	hash := st.tree.Hash()
+	hash, err := st.tree.Hash()
+	if err != nil {
+		panic(err)
+	}
 
 	return types.CommitID{
 		Version: st.tree.Version(),
@@ -220,17 +228,22 @@ func (st *Store) Delete(key []byte) {
 	}
 }
 
-// DeleteVersionsTo deletes versions upto the given version from the MutableTree. An error
+// DeleteVersions deletes a series of versions from the MutableTree. An error
 // is returned if any single version is invalid or the delete fails. All writes
 // happen in a single batch with a single commit.
-func (st *Store) DeleteVersionsTo(version int64) error {
-	return st.tree.DeleteVersionsTo(version)
+func (st *Store) DeleteVersions(versions ...int64) error {
+	return st.tree.DeleteVersions(versions...)
 }
 
 // LoadVersionForOverwriting attempts to load a tree at a previously committed
 // version, or the latest version below it. Any versions greater than targetVersion will be deleted.
 func (st *Store) LoadVersionForOverwriting(targetVersion int64) (int64, error) {
-	return targetVersion, st.tree.LoadVersionForOverwriting(targetVersion)
+	return st.tree.LoadVersionForOverwriting(targetVersion)
+}
+
+// LazyLoadVersionForOverwriting is the lazy version of LoadVersionForOverwriting.
+func (st *Store) LazyLoadVersionForOverwriting(targetVersion int64) (int64, error) {
+	return st.tree.LazyLoadVersionForOverwriting(targetVersion)
 }
 
 // Implements types.KVStore.
@@ -272,7 +285,7 @@ func (st *Store) Export(version int64) (*iavl.Exporter, error) {
 
 // Import imports an IAVL tree at the given version, returning an iavl.Importer for importing.
 func (st *Store) Import(version int64) (*iavl.Importer, error) {
-	tree, ok := st.tree.(*mutableTree)
+	tree, ok := st.tree.(*iavl.MutableTree)
 	if !ok {
 		return nil, errors.New("iavl import failed: unable to find mutable tree")
 	}
@@ -382,24 +395,23 @@ func (st *Store) Query(req abci.RequestQuery) (res abci.ResponseQuery) {
 func getProofFromTree(tree *iavl.MutableTree, key []byte, exists bool) *tmcrypto.ProofOps {
 	var (
 		commitmentProof *ics23.CommitmentProof
+		err             error
 	)
 
 	if exists {
 		// value was found
-		tempCommitmentProof, err := tree.GetMembershipProof(key)
+		commitmentProof, err = tree.GetMembershipProof(key)
 		if err != nil {
 			// sanity check: If value was found, membership proof must be creatable
 			panic(fmt.Sprintf("unexpected value for empty proof: %s", err.Error()))
 		}
-		commitmentProof = wrapper.ConvertCommitmentProof(tempCommitmentProof)
 	} else {
 		// value wasn't found
-		tempCommitmentProof, err := tree.GetNonMembershipProof(key)
+		commitmentProof, err = tree.GetNonMembershipProof(key)
 		if err != nil {
 			// sanity check: If value wasn't found, nonmembership proof must be creatable
 			panic(fmt.Sprintf("unexpected error for nonexistence proof: %s", err.Error()))
 		}
-		commitmentProof = wrapper.ConvertCommitmentProof(tempCommitmentProof)
 	}
 
 	op := types.NewIavlCommitmentOp(key, commitmentProof)
