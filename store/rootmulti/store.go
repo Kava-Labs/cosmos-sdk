@@ -1018,9 +1018,7 @@ func (rs *Store) DeleteLatestVersion(keyName string) error {
 	}
 
 	// Get the KVStore for that key
-	cInfo := &types.CommitInfo{}
-	var err error
-	cInfo, err = rs.GetCommitInfo(ver)
+	cInfo, err := rs.GetCommitInfo(ver)
 	if err != nil {
 		return err
 	}
@@ -1036,24 +1034,21 @@ func (rs *Store) DeleteLatestVersion(keyName string) error {
 
 	rs.logger.Debug("deleting KVStore", "key", key.Name(), "latest version", ver)
 
-	// Delete & deregister store from rootmulti store
-	// Any future buildCommitInfo will no longer include the store.
-	if err := deleteKVStore(types.KVStore(store)); err != nil {
-		return errors.Wrapf(err, "failed to delete store %s", key.Name())
-	}
-
-	if _, ok := rs.stores[key]; ok {
-		delete(rs.stores, key)
-		delete(rs.storesParams, key)
-		delete(rs.keysByName, key.Name())
-	}
-
 	// for IAVL stores, commit the deletion of the latest version to disk.
 	if store.GetStoreType() == types.StoreTypeIAVL {
+		// unwrap the caching layer
 		store = rs.GetCommitKVStore(key)
 		if err := store.(*iavl.Store).DeleteVersionsFrom(ver); err != nil {
 			return errors.Wrapf(err, "failed to delete versions %d onwards of %s store", ver, key.Name())
 		}
+	}
+
+	// deregister store from the rootmulti store
+	// Any future buildCommitInfo will no longer include the store.
+	if _, ok := rs.stores[key]; ok {
+		delete(rs.stores, key)
+		delete(rs.storesParams, key)
+		delete(rs.keysByName, key.Name())
 	}
 
 	return nil
