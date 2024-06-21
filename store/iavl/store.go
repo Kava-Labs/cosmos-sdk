@@ -229,6 +229,11 @@ func (st *Store) DeleteVersionsTo(version int64) error {
 	return st.tree.DeleteVersionsTo(version)
 }
 
+// DeleteVersionsFrom deletes from the given version upwards form the MutableTree.
+func (st *Store) DeleteVersionsFrom(version int64) error {
+	return st.tree.DeleteVersionsFrom(version)
+}
+
 // LoadVersionForOverwriting attempts to load a tree at a previously committed
 // version, or the latest version below it. Any versions greater than targetVersion will be deleted.
 func (st *Store) LoadVersionForOverwriting(targetVersion int64) (int64, error) {

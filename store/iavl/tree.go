@@ -30,6 +30,7 @@ type (
 		WorkingHash() []byte
 		VersionExists(version int64) bool
 		DeleteVersionsTo(version int64) error
+		DeleteVersionsFrom(version int64) error
 		GetVersioned(key []byte, version int64) ([]byte, error)
 		GetImmutable(version int64) (*iavl.ImmutableTree, error)
 		SetInitialVersion(version uint64)
@@ -65,6 +66,10 @@ func (it *immutableTree) SaveVersion() ([]byte, int64, error) {
 
 func (it *immutableTree) DeleteVersionsTo(_ int64) error {
 	panic("cannot call 'DeleteVersionsTo' on an immutable IAVL tree")
+}
+
+func (it *immutableTree) DeleteVersionsFrom(_ int64) error {
+	panic("cannot call 'DeleteVersionsFrom' on an immutable IAVL tree")
 }
 
 func (it *immutableTree) SetInitialVersion(_ uint64) {
