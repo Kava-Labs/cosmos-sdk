@@ -1011,6 +1011,68 @@ func (rs *Store) buildCommitInfo(version int64) *types.CommitInfo {
 	}
 }
 
+// DeleteLatestVersion finds a store with the given key name and deletes its latest version.
+// The store is deregistered from the rootmulti store. Calls to buildCommitInfo will not include it.
+// For stores with IAVL types, the deletion is written to the disk.
+// This is a destructive operation to be used with caution.
+// The reason it was added was to allow for rollbacks of upgrades that add modules.
+// Stores that do not exist in the version prior to upgrade can be forcibly deleted
+// before calling Rollback()
+func (rs *Store) DeleteLatestVersion(keyName string) error {
+	ver := GetLatestVersion(rs.db)
+	if ver == 0 {
+		return fmt.Errorf("unable to delete KVStore with key name %s, latest version is 0", keyName)
+	}
+
+	// Find the store key with the provided name
+	var key types.StoreKey = nil
+	for k := range rs.storesParams {
+		if k.Name() == keyName {
+			key = k
+			break
+		}
+	}
+	if key == nil {
+		return fmt.Errorf("no store found with key name %s", keyName)
+	}
+
+	// Get the KVStore for that key
+	cInfo, err := rs.GetCommitInfo(ver)
+	if err != nil {
+		return err
+	}
+	infos := make(map[string]types.StoreInfo)
+	for _, storeInfo := range cInfo.StoreInfos {
+		infos[storeInfo.Name] = storeInfo
+	}
+	commitID := rs.getCommitID(infos, key.Name())
+	store, err := rs.loadCommitStoreFromParams(key, commitID, rs.storesParams[key])
+	if err != nil {
+		return errors.Wrap(err, "failed to load store")
+	}
+
+	rs.logger.Debug("deleting KVStore", "key", key.Name(), "latest version", ver)
+
+	// for IAVL stores, commit the deletion of the latest version to disk.
+	if store.GetStoreType() == types.StoreTypeIAVL {
+		// unwrap the caching layer
+		store = rs.GetCommitKVStore(key)
+		if err := store.(*iavl.Store).DeleteVersions(ver); err != nil {
+			return errors.Wrapf(err, "failed to delete version %d of %s store", ver, key.Name())
+		}
+	}
+
+	// deregister store from the rootmulti store
+	// Any future buildCommitInfo will no longer include the store.
+	if _, ok := rs.stores[key]; ok {
+		delete(rs.stores, key)
+		delete(rs.storesParams, key)
+		delete(rs.keysByName, key.Name())
+	}
+
+	return nil
+}
+
 // RollbackToVersion delete the versions after `target` and update the latest version.
 func (rs *Store) RollbackToVersion(target int64) error {
 	if target <= 0 {
