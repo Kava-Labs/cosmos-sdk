@@ -8,11 +8,13 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server/types"
+	"github.com/cosmos/cosmos-sdk/store/rootmulti"
 )
 
 // NewRollbackCmd creates a command to rollback tendermint and multistore state by one height.
 func NewRollbackCmd(appCreator types.AppCreator, defaultNodeHome string) *cobra.Command {
 	var removeBlock bool
+	moduleKeysToDelete := make([]string, 0)
 
 	cmd := &cobra.Command{
 		Use:   "rollback",
@@ -39,6 +41,17 @@ application.
 			if err != nil {
 				return fmt.Errorf("failed to rollback tendermint state: %w", err)
 			}
+
+			// for rolling back upgrades that add modules, we must first forcibly delete those.
+			// otherwise, the rollback will panic because no version of new modules will exist.
+			store := app.CommitMultiStore().(*rootmulti.Store)
+			for _, key := range moduleKeysToDelete {
+				fmt.Printf("deleting latest version of KVStore with key %s\n", key)
+				if err := store.DeleteLatestVersion(key); err != nil {
+					return err
+				}
+			}
+
 			// rollback the multistore
 
 			if err := app.CommitMultiStore().RollbackToVersion(height); err != nil {
@@ -52,5 +65,6 @@ application.
 
 	cmd.Flags().String(flags.FlagHome, defaultNodeHome, "The application home directory")
 	cmd.Flags().BoolVar(&removeBlock, "hard", false, "remove last block as well as state")
+	cmd.Flags().StringSliceVar(&moduleKeysToDelete, "unsafe-remove-modules", []string{}, "force delete KV stores with the provided prefix. useful for rolling back an upgrade that adds a module")
 	return cmd
 }
