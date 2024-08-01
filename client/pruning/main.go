@@ -106,7 +106,7 @@ Supported app-db-backend types include 'goleveldb', 'rocksdb', 'pebbledb'.`,
 			}
 			cmd.Printf("pruning heights start from %v, end at %v\n", pruningHeights[0], pruningHeights[len(pruningHeights)-1])
 
-			if err = rootMultiStore.PruneStores(false, pruningHeights); err != nil {
+			if err = rootMultiStore.PruneStores(pruningHeights[len(pruningHeights)-1]); err != nil {
 				return err
 			}
 
@@ -119,7 +119,7 @@ Supported app-db-backend types include 'goleveldb', 'rocksdb', 'pebbledb'.`,
 	cmd.Flags().String(FlagAppDBBackend, "", "The type of database for application and snapshots databases")
 	cmd.Flags().Uint64(server.FlagPruningKeepRecent, 0, "Number of recent heights to keep on disk (ignored if pruning is not 'custom')")
 	cmd.Flags().Uint64(server.FlagPruningInterval, 10,
-		`Height interval at which pruned heights are removed from disk (ignored if pruning is not 'custom'), 
+		`Height interval at which pruned heights are removed from disk (ignored if pruning is not 'custom'),
 		this is not used by this command but kept for compatibility with the complete pruning options`)
 
 	return cmd
