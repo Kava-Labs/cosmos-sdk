@@ -26,4 +26,4 @@ jobs:
           version: v1.50.1
           args: "--concurrency 1"
         env:
-          GOGC: "80"
+          GOGC: "50"
