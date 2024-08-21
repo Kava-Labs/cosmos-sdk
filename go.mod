@@ -27,7 +27,7 @@ require (
 	github.com/cosmos/go-bip39 v1.0.0
 	github.com/cosmos/gogogateway v1.2.0
 	github.com/cosmos/gogoproto v1.4.10
-	github.com/cosmos/iavl v1.0.0
+	github.com/cosmos/iavl v1.2.0
 	github.com/cosmos/ics23/go v0.10.0
 	github.com/cosmos/ledger-cosmos-go v0.13.1
 	github.com/golang/mock v1.6.0
@@ -193,7 +193,7 @@ replace (
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
 	// Use cometbft fork of tendermint
 	github.com/cometbft/cometbft => github.com/kava-labs/cometbft v0.37.4-kava.1
-	github.com/cosmos/iavl => github.com/kava-labs/iavl v1.2.0-kava.1.0.20240816225759-c1d6db02ef02
+	github.com/cosmos/iavl => github.com/kava-labs/iavl v1.2.0-kava.2
 	// dgrijalva/jwt-go is deprecated and doesn't receive security updates.
 	// TODO: remove it: https://github.com/cosmos/cosmos-sdk/issues/13134
 	github.com/dgrijalva/jwt-go => github.com/golang-jwt/jwt/v4 v4.4.2
