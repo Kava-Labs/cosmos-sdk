@@ -57,7 +57,7 @@ require (
 	github.com/cosmos/cosmos-proto v1.0.0-beta.4 // indirect
 	github.com/cosmos/go-bip39 v1.0.0 // indirect
 	github.com/cosmos/gogogateway v1.2.0 // indirect
-	github.com/cosmos/iavl v1.0.0 // indirect
+	github.com/cosmos/iavl v1.2.0 // indirect
 	github.com/cosmos/ics23/go v0.10.0 // indirect
 	github.com/cosmos/ledger-cosmos-go v0.13.1 // indirect
 	github.com/cosmos/rosetta-sdk-go v0.10.0 // indirect
@@ -191,7 +191,7 @@ replace (
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
 	// We always want to test against the latest version of the SDK.
 	github.com/cosmos/cosmos-sdk => ../.
-	github.com/cosmos/iavl => github.com/kava-labs/iavl v1.2.0-kava.1.0.20240816225759-c1d6db02ef02
+	github.com/cosmos/iavl => github.com/kava-labs/iavl v1.2.0-kava.2
 	// Fix upstream GHSA-h395-qcrw-5vmq and GHSA-3vp4-m3rf-835h vulnerabilities.
 	// TODO Remove it: https://github.com/cosmos/cosmos-sdk/issues/10409
 	github.com/gin-gonic/gin => github.com/gin-gonic/gin v1.9.0
