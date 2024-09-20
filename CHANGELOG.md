@@ -37,6 +37,13 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ## [Unreleased]
 
+## [v0.47.14](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.47.14) - 2024-09-20
+
+### Improvements
+
+* [#21295](https://github.com/cosmos/cosmos-sdk/pull/21295) Bump to gogoproto v1.7.0.
+* [#21295](https://github.com/cosmos/cosmos-sdk/pull/21295) Remove usage of `slices.SortFunc` due to API break in used versions.
+
 ## [v0.47.13](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.47.13) - 2024-07-15
 
 ### Bug Fixes
