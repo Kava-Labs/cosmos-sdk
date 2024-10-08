@@ -191,6 +191,10 @@ func NewTxTimeoutHeightDecorator() TxTimeoutHeightDecorator {
 // If a height timeout is provided (non-zero) and is less than the current block
 // height, then an error is returned.
 func (txh TxTimeoutHeightDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
+	if ctx.IsCheckTx() {
+		return next(ctx, tx, simulate)
+	}
+
 	timeoutTx, ok := tx.(TxWithTimeoutHeight)
 	if !ok {
 		return ctx, sdkerrors.Wrap(sdkerrors.ErrTxDecode, "expected tx to implement TxWithTimeoutHeight")

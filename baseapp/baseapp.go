@@ -716,6 +716,7 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte) (gInfo sdk.GasInfo, re
 		// GasMeter expected to be set in AnteHandler
 		gasWanted = ctx.GasMeter().Limit()
 
+		fmt.Printf("AnteHandler Error: %v\n", err)
 		if err != nil {
 			return gInfo, nil, nil, 0, err
 		}
