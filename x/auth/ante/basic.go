@@ -1,6 +1,7 @@
 package ante
 
 import (
+	"fmt"
 	"github.com/cosmos/cosmos-sdk/codec/legacy"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -191,13 +192,18 @@ func NewTxTimeoutHeightDecorator() TxTimeoutHeightDecorator {
 // If a height timeout is provided (non-zero) and is less than the current block
 // height, then an error is returned.
 func (txh TxTimeoutHeightDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
+	fmt.Printf("TxTimeoutHeightDecorator.AnteHandle was called!\n")
+	return next(ctx, tx, simulate)
+
 	timeoutTx, ok := tx.(TxWithTimeoutHeight)
 	if !ok {
 		return ctx, sdkerrors.Wrap(sdkerrors.ErrTxDecode, "expected tx to implement TxWithTimeoutHeight")
 	}
 
 	timeoutHeight := timeoutTx.GetTimeoutHeight()
-	if timeoutHeight > 0 && uint64(ctx.BlockHeight()) > timeoutHeight {
+	fmt.Printf("TimeoutHeight: %v\n", timeoutHeight)
+	fmt.Printf("IsCheckTx: %v\n", ctx.IsCheckTx())
+	if timeoutHeight > 0 && uint64(ctx.BlockHeight()) > timeoutHeight /*&& !(ctx.IsCheckTx() || ctx.IsReCheckTx())*/ {
 		return ctx, sdkerrors.Wrapf(
 			sdkerrors.ErrTxTimeoutHeight, "block height: %d, timeout height: %d", ctx.BlockHeight(), timeoutHeight,
 		)

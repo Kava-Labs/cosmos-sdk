@@ -684,7 +684,9 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte) (gInfo sdk.GasInfo, re
 		return sdk.GasInfo{}, nil, nil, 0, err
 	}
 
-	if app.anteHandler != nil {
+	if app.anteHandler != nil /*&& mode != runTxModeCheck && mode != runTxModeReCheck*/ {
+		fmt.Printf("anteHandler MODE: %v\n", mode)
+
 		var (
 			anteCtx sdk.Context
 			msCache sdk.CacheMultiStore
@@ -699,6 +701,7 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte) (gInfo sdk.GasInfo, re
 		// performance benefits, but it'll be more difficult to get right.
 		anteCtx, msCache = app.cacheTxContext(ctx, txBytes)
 		anteCtx = anteCtx.WithEventManager(sdk.NewEventManager())
+
 		newCtx, err := app.anteHandler(anteCtx, tx, mode == runTxModeSimulate)
 
 		if !newCtx.IsZero() {
@@ -715,6 +718,8 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte) (gInfo sdk.GasInfo, re
 
 		// GasMeter expected to be set in AnteHandler
 		gasWanted = ctx.GasMeter().Limit()
+
+		fmt.Printf("anteHandler error: %v\n", err)
 
 		if err != nil {
 			return gInfo, nil, nil, 0, err
