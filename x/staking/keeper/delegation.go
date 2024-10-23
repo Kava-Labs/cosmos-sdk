@@ -91,6 +91,7 @@ func (k Keeper) GetDelegatorDelegations(ctx sdk.Context, delegator sdk.AccAddres
 
 // SetDelegation sets a delegation.
 func (k Keeper) SetDelegation(ctx sdk.Context, delegation types.Delegation) {
+	fmt.Println("SetDelegation", delegation)
 	delegatorAddress := sdk.MustAccAddressFromBech32(delegation.DelegatorAddress)
 
 	store := ctx.KVStore(k.storeKey)
@@ -271,6 +272,7 @@ func (k Keeper) HasMaxUnbondingDelegationEntries(ctx sdk.Context, delegatorAddr 
 
 // SetUnbondingDelegation sets the unbonding delegation and associated index.
 func (k Keeper) SetUnbondingDelegation(ctx sdk.Context, ubd types.UnbondingDelegation) {
+	fmt.Println("SetUnbondingDelegation", ubd)
 	delAddr := sdk.MustAccAddressFromBech32(ubd.DelegatorAddress)
 
 	store := ctx.KVStore(k.storeKey)
@@ -304,6 +306,7 @@ func (k Keeper) SetUnbondingDelegationEntry(
 	ctx sdk.Context, delegatorAddr sdk.AccAddress, validatorAddr sdk.ValAddress,
 	creationHeight int64, minTime time.Time, balance math.Int,
 ) types.UnbondingDelegation {
+	fmt.Println("SetUnbondingDelegationEntry", delegatorAddr, validatorAddr, creationHeight, minTime, balance)
 	ubd, found := k.GetUnbondingDelegation(ctx, delegatorAddr, validatorAddr)
 	id := k.IncrementUnbondingID(ctx)
 	if found {
@@ -469,6 +472,7 @@ func (k Keeper) HasMaxRedelegationEntries(ctx sdk.Context, delegatorAddr sdk.Acc
 
 // SetRedelegation set a redelegation and associated index.
 func (k Keeper) SetRedelegation(ctx sdk.Context, red types.Redelegation) {
+	fmt.Println("SetRedelegation", red)
 	delegatorAddress := sdk.MustAccAddressFromBech32(red.DelegatorAddress)
 
 	store := ctx.KVStore(k.storeKey)
@@ -495,6 +499,7 @@ func (k Keeper) SetRedelegationEntry(ctx sdk.Context,
 	minTime time.Time, balance math.Int,
 	sharesSrc, sharesDst sdk.Dec,
 ) types.Redelegation {
+	fmt.Println("SetRedelegationEntry", delegatorAddr, validatorSrcAddr, validatorDstAddr, creationHeight, minTime, balance, sharesSrc, sharesDst)
 	red, found := k.GetRedelegation(ctx, delegatorAddr, validatorSrcAddr, validatorDstAddr)
 	id := k.IncrementUnbondingID(ctx)
 	if found {
@@ -631,6 +636,7 @@ func (k Keeper) Delegate(
 	ctx sdk.Context, delAddr sdk.AccAddress, bondAmt math.Int, tokenSrc types.BondStatus,
 	validator types.Validator, subtractAccount bool,
 ) (newShares sdk.Dec, err error) {
+	fmt.Println("Delegate", delAddr, bondAmt, tokenSrc, validator, subtractAccount)
 	// In some situations, the exchange rate becomes invalid, e.g. if
 	// Validator loses all tokens due to slashing. In this case,
 	// make all future delegations invalid.
