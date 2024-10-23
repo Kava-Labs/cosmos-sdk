@@ -472,7 +472,10 @@ func (k BaseKeeper) BurnCoins(ctx sdk.Context, moduleName string, amounts sdk.Co
 
 	for _, amount := range amounts {
 		supply := k.GetSupply(ctx, amount.GetDenom())
+		fmt.Println("BurnCoins amount", amount)
+		fmt.Println("BurnCoins supply", supply)
 		supply = supply.Sub(amount)
+		fmt.Println("BurnCoins supply second", supply)
 		k.setSupply(ctx, supply)
 	}
 
@@ -486,7 +489,7 @@ func (k BaseKeeper) BurnCoins(ctx sdk.Context, moduleName string, amounts sdk.Co
 
 	return nil
 }
-g
+
 // setSupply sets the supply for the given coin
 func (k BaseKeeper) setSupply(ctx sdk.Context, coin sdk.Coin) {
 	fmt.Println("setSupply", coin)

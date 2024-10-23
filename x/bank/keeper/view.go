@@ -113,6 +113,7 @@ func (k BaseViewKeeper) GetBalance(ctx sdk.Context, addr sdk.AccAddress, denom s
 // provides the token balance to a callback. If true is returned from the
 // callback, iteration is halted.
 func (k BaseViewKeeper) IterateAccountBalances(ctx sdk.Context, addr sdk.AccAddress, cb func(sdk.Coin) bool) {
+	fmt.Println("IterateAccountBalances addr: ", addr)
 	accountStore := k.getAccountStore(ctx, addr)
 
 	iterator := accountStore.Iterator(nil, nil)
@@ -121,6 +122,7 @@ func (k BaseViewKeeper) IterateAccountBalances(ctx sdk.Context, addr sdk.AccAddr
 	for ; iterator.Valid(); iterator.Next() {
 		denom := string(iterator.Key())
 		balance, err := UnmarshalBalanceCompat(k.cdc, iterator.Value(), denom)
+		fmt.Println("IterateAccountBalances denom: ", denom, " balance: ", balance)
 		if err != nil {
 			panic(err)
 		}
