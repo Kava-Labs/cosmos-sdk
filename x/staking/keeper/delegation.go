@@ -3,6 +3,7 @@ package keeper
 import (
 	"bytes"
 	"fmt"
+	"runtime/debug"
 	"time"
 
 	"cosmossdk.io/math"
@@ -92,6 +93,7 @@ func (k Keeper) GetDelegatorDelegations(ctx sdk.Context, delegator sdk.AccAddres
 // SetDelegation sets a delegation.
 func (k Keeper) SetDelegation(ctx sdk.Context, delegation types.Delegation) {
 	fmt.Println("SetDelegation", delegation)
+	debug.PrintStack()
 	delegatorAddress := sdk.MustAccAddressFromBech32(delegation.DelegatorAddress)
 
 	store := ctx.KVStore(k.storeKey)
@@ -273,6 +275,7 @@ func (k Keeper) HasMaxUnbondingDelegationEntries(ctx sdk.Context, delegatorAddr 
 // SetUnbondingDelegation sets the unbonding delegation and associated index.
 func (k Keeper) SetUnbondingDelegation(ctx sdk.Context, ubd types.UnbondingDelegation) {
 	fmt.Println("SetUnbondingDelegation", ubd)
+	debug.PrintStack()
 	delAddr := sdk.MustAccAddressFromBech32(ubd.DelegatorAddress)
 
 	store := ctx.KVStore(k.storeKey)
@@ -307,6 +310,8 @@ func (k Keeper) SetUnbondingDelegationEntry(
 	creationHeight int64, minTime time.Time, balance math.Int,
 ) types.UnbondingDelegation {
 	fmt.Println("SetUnbondingDelegationEntry", delegatorAddr, validatorAddr, creationHeight, minTime, balance)
+	debug.PrintStack()
+
 	ubd, found := k.GetUnbondingDelegation(ctx, delegatorAddr, validatorAddr)
 	id := k.IncrementUnbondingID(ctx)
 	if found {
