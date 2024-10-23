@@ -1,15 +1,12 @@
 package telemetry
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/armon/go-metrics"
 	metricsprom "github.com/armon/go-metrics/prometheus"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/common/expfmt"
 )
 
 // globalLabels defines the set of global labels that will be applied to all
@@ -141,26 +138,27 @@ func (m *Metrics) Gather(format string) (GatherResponse, error) {
 }
 
 func (m *Metrics) gatherPrometheus() (GatherResponse, error) {
-	if !m.prometheusEnabled {
-		return GatherResponse{}, fmt.Errorf("prometheus metrics are not enabled")
-	}
-
-	metricsFamilies, err := prometheus.DefaultGatherer.Gather()
-	if err != nil {
-		return GatherResponse{}, fmt.Errorf("failed to gather prometheus metrics: %w", err)
-	}
-
-	buf := &bytes.Buffer{}
-	defer buf.Reset()
-
-	e := expfmt.NewEncoder(buf, expfmt.FmtText)
-	for _, mf := range metricsFamilies {
-		if err := e.Encode(mf); err != nil {
-			return GatherResponse{}, fmt.Errorf("failed to encode prometheus metrics: %w", err)
-		}
-	}
-
-	return GatherResponse{ContentType: string(expfmt.FmtText), Metrics: buf.Bytes()}, nil
+	return GatherResponse{}, nil
+	//if !m.prometheusEnabled {
+	//	return GatherResponse{}, fmt.Errorf("prometheus metrics are not enabled")
+	//}
+	//
+	//metricsFamilies, err := prometheus.DefaultGatherer.Gather()
+	//if err != nil {
+	//	return GatherResponse{}, fmt.Errorf("failed to gather prometheus metrics: %w", err)
+	//}
+	//
+	//buf := &bytes.Buffer{}
+	//defer buf.Reset()
+	//
+	//e := expfmt.NewEncoder(buf, expfmt.FmtText)
+	//for _, mf := range metricsFamilies {
+	//	if err := e.Encode(mf); err != nil {
+	//		return GatherResponse{}, fmt.Errorf("failed to encode prometheus metrics: %w", err)
+	//	}
+	//}
+	//
+	//return GatherResponse{ContentType: string(expfmt.FmtText), Metrics: buf.Bytes()}, nil
 }
 
 func (m *Metrics) gatherGeneric() (GatherResponse, error) {
