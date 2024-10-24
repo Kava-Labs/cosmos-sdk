@@ -92,8 +92,8 @@ func (k Keeper) GetDelegatorDelegations(ctx sdk.Context, delegator sdk.AccAddres
 
 // SetDelegation sets a delegation.
 func (k Keeper) SetDelegation(ctx sdk.Context, delegation types.Delegation) {
-	fmt.Println("SetDelegation", delegation)
-	debug.PrintStack()
+	//fmt.Println("SetDelegation", delegation)
+	//debug.PrintStack()
 	delegatorAddress := sdk.MustAccAddressFromBech32(delegation.DelegatorAddress)
 
 	store := ctx.KVStore(k.storeKey)

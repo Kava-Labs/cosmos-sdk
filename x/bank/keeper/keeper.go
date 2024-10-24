@@ -1,10 +1,8 @@
 package keeper
 
 import (
-	"fmt"
-	"runtime/debug"
-
 	"cosmossdk.io/math"
+	"fmt"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/internal/conv"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -492,8 +490,8 @@ func (k BaseKeeper) BurnCoins(ctx sdk.Context, moduleName string, amounts sdk.Co
 
 // setSupply sets the supply for the given coin
 func (k BaseKeeper) setSupply(ctx sdk.Context, coin sdk.Coin) {
-	fmt.Println("setSupply", coin)
-	debug.PrintStack()
+	//fmt.Println("setSupply", coin)
+	//debug.PrintStack()
 	intBytes, err := coin.Amount.Marshal()
 	if err != nil {
 		panic(fmt.Errorf("unable to marshal amount value %v", err))
