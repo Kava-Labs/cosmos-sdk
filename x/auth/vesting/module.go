@@ -2,6 +2,8 @@ package vesting
 
 import (
 	"encoding/json"
+	"fmt"
+	"runtime/debug"
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	gwruntime "github.com/grpc-ecosystem/grpc-gateway/runtime"
@@ -40,6 +42,8 @@ func (AppModuleBasic) Name() string {
 
 // RegisterCodec registers the module's types with the given codec.
 func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
+	fmt.Println("RegisterLegacyAminoCodec", cdc)
+	debug.PrintStack()
 	types.RegisterLegacyAminoCodec(cdc)
 }
 
@@ -65,6 +69,7 @@ func (a AppModuleBasic) RegisterGRPCGatewayRoutes(_ client.Context, _ *gwruntime
 
 // GetTxCmd returns the root tx command for the auth module.
 func (AppModuleBasic) GetTxCmd() *cobra.Command {
+	fmt.Println("GetTxCmd")
 	return cli.GetTxCmd()
 }
 
