@@ -3,6 +3,8 @@ package types
 import (
 	"fmt"
 	"reflect"
+	"runtime/debug"
+	"strings"
 
 	"github.com/cosmos/gogoproto/jsonpb"
 	"github.com/cosmos/gogoproto/proto"
@@ -151,6 +153,10 @@ func (registry *interfaceRegistry) RegisterCustomTypeURL(iface interface{}, type
 // This function PANICs if different concrete types are registered under the
 // same typeURL.
 func (registry *interfaceRegistry) registerImpl(iface interface{}, typeURL string, impl proto.Message) {
+	fmt.Println("registering impl", typeURL)
+	if strings.Contains(typeURL, "eth") {
+		debug.PrintStack()
+	}
 	ityp := reflect.TypeOf(iface).Elem()
 	imap, found := registry.interfaceImpls[ityp]
 	if !found {
@@ -275,6 +281,7 @@ func (registry *interfaceRegistry) UnpackAny(any *Any, iface interface{}) error 
 // registered with RegisterInterface/RegisterImplementations, as well as those
 // registered with RegisterWithCustomTypeURL.
 func (registry *interfaceRegistry) Resolve(typeURL string) (proto.Message, error) {
+	fmt.Println("resolving", typeURL)
 	typ, found := registry.typeURLMap[typeURL]
 	if !found {
 		return nil, fmt.Errorf("unable to resolve type URL %s", typeURL)
