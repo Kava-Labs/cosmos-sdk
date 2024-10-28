@@ -102,6 +102,10 @@ func NewInterfaceRegistry() InterfaceRegistry {
 }
 
 func (registry *interfaceRegistry) RegisterInterface(protoName string, iface interface{}, impls ...proto.Message) {
+	if strings.Contains(protoName, "ethermint") {
+		fmt.Println("registering interface", protoName)
+		debug.PrintStack()
+	}
 	typ := reflect.TypeOf(iface)
 	if typ.Elem().Kind() != reflect.Interface {
 		panic(fmt.Errorf("%T is not an interface type", iface))
@@ -153,8 +157,8 @@ func (registry *interfaceRegistry) RegisterCustomTypeURL(iface interface{}, type
 // This function PANICs if different concrete types are registered under the
 // same typeURL.
 func (registry *interfaceRegistry) registerImpl(iface interface{}, typeURL string, impl proto.Message) {
-	fmt.Println("registering impl", typeURL)
-	if strings.Contains(typeURL, "eth") {
+	if strings.Contains(typeURL, "ethermint.types") {
+		fmt.Println("registering impl", typeURL)
 		debug.PrintStack()
 	}
 	ityp := reflect.TypeOf(iface).Elem()
@@ -281,7 +285,6 @@ func (registry *interfaceRegistry) UnpackAny(any *Any, iface interface{}) error 
 // registered with RegisterInterface/RegisterImplementations, as well as those
 // registered with RegisterWithCustomTypeURL.
 func (registry *interfaceRegistry) Resolve(typeURL string) (proto.Message, error) {
-	fmt.Println("resolving", typeURL)
 	typ, found := registry.typeURLMap[typeURL]
 	if !found {
 		return nil, fmt.Errorf("unable to resolve type URL %s", typeURL)
