@@ -254,6 +254,13 @@ func (registry *interfaceRegistry) UnpackAny(any *Any, iface interface{}) error 
 		return fmt.Errorf("no registered implementations of type %+v", rt)
 	}
 
+	if strings.Contains(any.TypeUrl, "cosmos.auth.v1beta1.BaseAccount") {
+		fmt.Println("imap", imap)
+		fmt.Println("any.TypeUrl", any.TypeUrl)
+		fmt.Println("rt", rt)
+		debug.PrintStack()
+	}
+
 	typ, found := imap[any.TypeUrl]
 	if !found {
 		return fmt.Errorf("no concrete type registered for type URL %s against interface %T", any.TypeUrl, iface)
