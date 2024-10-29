@@ -153,10 +153,6 @@ func (registry *interfaceRegistry) RegisterCustomTypeURL(iface interface{}, type
 // This function PANICs if different concrete types are registered under the
 // same typeURL.
 func (registry *interfaceRegistry) registerImpl(iface interface{}, typeURL string, impl proto.Message) {
-	if strings.Contains(typeURL, "cosmos.auth.v1beta1.BaseAccount") {
-		fmt.Println("registering impl", typeURL)
-		debug.PrintStack()
-	}
 	ityp := reflect.TypeOf(iface).Elem()
 	imap, found := registry.interfaceImpls[ityp]
 	if !found {
