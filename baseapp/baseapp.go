@@ -3,9 +3,12 @@ package baseapp
 import (
 	"context"
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/x/consensus/types"
 	"math"
+	"runtime/debug"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/cockroachdb/errors"
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -1025,6 +1028,18 @@ func (app *BaseApp) runMsgs(ctx sdk.Context, msgs []sdk.Msg, msgsV2 []protov2.Me
 		msgResult, err := handler(ctx, msg)
 		fmt.Println("msg result", msgResult, err)
 		if err != nil {
+			if strings.Contains(sdk.MsgTypeURL(msg), "MsgUpdateParams") {
+				msgCons, is := msg.(*types.MsgUpdateParams)
+				if is {
+					fmt.Println("msgCons.Block", msgCons.Block)
+					fmt.Println("msgCons.Evidence", msgCons.Evidence)
+					fmt.Println("msgCons.Validator", msgCons.Validator)
+					fmt.Println("msgCons.Abci", msgCons.Abci)
+					fmt.Println("msgCons.Authority", msgCons.Authority)
+				}
+			}
+			fmt.Println("handling message error occurred")
+			debug.PrintStack()
 			return nil, errorsmod.Wrapf(err, "failed to execute message; message index: %d", i)
 		}
 
