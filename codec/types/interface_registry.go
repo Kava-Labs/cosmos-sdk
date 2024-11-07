@@ -207,7 +207,7 @@ func (registry *interfaceRegistry) RegisterCustomTypeURL(iface interface{}, type
 // This function PANICs if different concrete types are registered under the
 // same typeURL.
 func (registry *interfaceRegistry) registerImpl(iface interface{}, typeURL string, impl proto.Message) {
-	if strings.Contains(typeURL, "/ibc") {
+	if strings.Contains(typeURL, "/ibc.lightclients") {
 		fmt.Println("registerImpl register impl", typeURL)
 		debug.PrintStack()
 	}
@@ -343,7 +343,7 @@ func (registry *interfaceRegistry) UnpackAny(any *Any, iface interface{}) error 
 // registered with RegisterInterface/RegisterImplementations, as well as those
 // registered with RegisterWithCustomTypeURL.
 func (registry *interfaceRegistry) Resolve(typeURL string) (proto.Message, error) {
-	if strings.Contains(typeURL, "/ibc") {
+	if strings.Contains(typeURL, "/ibc.lightclients") {
 		fmt.Println("Resolve resolve type url", typeURL)
 	}
 	typ, found := registry.typeURLMap[typeURL]
