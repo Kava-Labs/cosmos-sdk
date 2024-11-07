@@ -187,6 +187,8 @@ func (msr *MsgServiceRouter) registerMsgServiceHandler(sd *grpc.ServiceDesc, met
 		if m, ok := msg.(sdk.HasValidateBasic); ok {
 			fmt.Println("msg has validate basic", requestTypeName)
 			if err := m.ValidateBasic(); err != nil {
+
+				fmt.Println("msg has validate basic error", requestTypeName, err)
 				return nil, err
 			}
 		}
@@ -208,11 +210,10 @@ func (msr *MsgServiceRouter) registerMsgServiceHandler(sd *grpc.ServiceDesc, met
 		// Call the method handler from the service description with the handler object.
 		// We don't do any decoding here because the decoding was already done.
 		res, err := methodHandler(handler, ctx, noopDecoder, interceptor)
+		fmt.Println("handler result for msg", res, err, msg)
 		if err != nil {
 			return nil, err
 		}
-
-		fmt.Println("handler result", res)
 
 		resMsg, ok := res.(proto.Message)
 		fmt.Println("resMsg", resMsg, ok)
