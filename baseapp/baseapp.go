@@ -3,7 +3,6 @@ package baseapp
 import (
 	"context"
 	"fmt"
-	gov "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"math"
 	"runtime/debug"
 	"sort"
@@ -1030,15 +1029,15 @@ func (app *BaseApp) runMsgs(ctx sdk.Context, msgs []sdk.Msg, msgsV2 []protov2.Me
 		if err != nil {
 			if strings.Contains(sdk.MsgTypeURL(msg), "MsgSubmitProposal") {
 				fmt.Println("msg is MsgSubmitProposal", msg)
-				msgCons, is := msg.(*gov.MsgSubmitProposal)
-				fmt.Println("msgCons", msgCons)
-				if is {
-					fmt.Println("msgCons.Content", msgCons.Content)
-					fmt.Println("msgCons.Proposer", msgCons.Proposer)
-					fmt.Println("msgCons.InitialDeposit", msgCons.InitialDeposit)
-				} else {
-					fmt.Println("msg is not MsgSubmitProposal", msg)
-				}
+				//msgCons, is := msg.(*gov.MsgSubmitProposal)
+				//fmt.Println("msgCons", msgCons)
+				//if is {
+				//	fmt.Println("msgCons.Content", msgCons.Content)
+				//	fmt.Println("msgCons.Proposer", msgCons.Proposer)
+				//	fmt.Println("msgCons.InitialDeposit", msgCons.InitialDeposit)
+				//} else {
+				//	fmt.Println("msg is not MsgSubmitProposal", msg)
+				//}
 			}
 			fmt.Println("handling message error occurred", sdk.MsgTypeURL(msg), msg)
 			debug.PrintStack()
