@@ -1079,6 +1079,10 @@ func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
 }
 
 func _Msg_SubmitProposal_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	fmt.Println("_Msg_SubmitProposal_Handler srv", srv)
+	fmt.Println("_Msg_SubmitProposal_Handler ctx", ctx)
+	fmt.Println("_Msg_SubmitProposal_Handler dec", dec)
+	fmt.Println("_Msg_SubmitProposal_Handler interceptor", interceptor)
 	in := new(MsgSubmitProposal)
 	if err := dec(in); err != nil {
 		return nil, err

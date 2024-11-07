@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"fmt"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
@@ -85,6 +86,8 @@ func NewMsgExecLegacyContent(content *codectypes.Any, authority string) *MsgExec
 
 // ValidateBasic implements the sdk.Msg interface.
 func (c MsgExecLegacyContent) ValidateBasic() error {
+	fmt.Println("MsgExecLegacyContent.ValidateBasic", c.Authority)
+	fmt.Println("MsgExecLegacyContent.ValidateBasic", c.Content)
 	_, err := sdk.AccAddressFromBech32(c.Authority)
 	if err != nil {
 		return err

@@ -3,7 +3,7 @@ package baseapp
 import (
 	"context"
 	"fmt"
-	"github.com/cosmos/cosmos-sdk/x/consensus/types"
+	gov "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"math"
 	"runtime/debug"
 	"sort"
@@ -1028,18 +1028,16 @@ func (app *BaseApp) runMsgs(ctx sdk.Context, msgs []sdk.Msg, msgsV2 []protov2.Me
 		msgResult, err := handler(ctx, msg)
 		fmt.Println("msg result", msgResult, err)
 		if err != nil {
-			if strings.Contains(sdk.MsgTypeURL(msg), "MsgUpdateParams") {
-				fmt.Println("msg is MsgUpdateParams", msg)
-				msgCons, is := msg.(*types.MsgUpdateParams)
+			if strings.Contains(sdk.MsgTypeURL(msg), "MsgSubmitProposal") {
+				fmt.Println("msg is MsgSubmitProposal", msg)
+				msgCons, is := msg.(*gov.MsgSubmitProposal)
 				fmt.Println("msgCons", msgCons)
 				if is {
-					fmt.Println("msgCons.Block", msgCons.Block)
-					fmt.Println("msgCons.Evidence", msgCons.Evidence)
-					fmt.Println("msgCons.Validator", msgCons.Validator)
-					fmt.Println("msgCons.Abci", msgCons.Abci)
-					fmt.Println("msgCons.Authority", msgCons.Authority)
+					fmt.Println("msgCons.Content", msgCons.Content)
+					fmt.Println("msgCons.Proposer", msgCons.Proposer)
+					fmt.Println("msgCons.InitialDeposit", msgCons.InitialDeposit)
 				} else {
-					fmt.Println("msg is not MsgUpdateParams", msg)
+					fmt.Println("msg is not MsgSubmitProposal", msg)
 				}
 			}
 			fmt.Println("handling message error occurred", sdk.MsgTypeURL(msg), msg)
