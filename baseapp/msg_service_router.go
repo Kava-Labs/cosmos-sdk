@@ -3,8 +3,6 @@ package baseapp
 import (
 	"context"
 	"fmt"
-	"strings"
-
 	gogogrpc "github.com/cosmos/gogoproto/grpc"
 	"github.com/cosmos/gogoproto/proto"
 	"google.golang.org/grpc"
@@ -128,7 +126,6 @@ func (msr *MsgServiceRouter) registerMsgServiceHandler(sd *grpc.ServiceDesc, met
 	// This approach is maybe a bit hacky, but less hacky than reflecting on the handler object itself.
 	// We use a no-op interceptor to avoid actually calling into the handler itself.
 	_, _ = methodHandler(nil, context.Background(), func(i interface{}) error {
-		fmt.Println("registerMsgServiceHandler empty invocation initial", i)
 		msg, ok := i.(sdk.Msg)
 		if !ok {
 			// We panic here because there is no other alternative and the app cannot be initialized correctly
@@ -170,25 +167,15 @@ func (msr *MsgServiceRouter) registerMsgServiceHandler(sd *grpc.ServiceDesc, met
 		)
 	}
 
-	if strings.Contains(requestTypeName, "MsgUpdateParams") {
-		fmt.Println("registerMsgServiceHandler MsgUpdateParams", requestTypeName)
-		//debug.PrintStack()
-	}
-
 	msr.routes[requestTypeName] = func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
-		fmt.Println("invoking msg handler", requestTypeName, msg)
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 		interceptor := func(goCtx context.Context, _ interface{}, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-			fmt.Println("interceptor", requestTypeName)
 			goCtx = context.WithValue(goCtx, sdk.SdkContextKey, ctx)
 			return handler(goCtx, msg)
 		}
 
 		if m, ok := msg.(sdk.HasValidateBasic); ok {
-			fmt.Println("msg has validate basic", requestTypeName)
 			if err := m.ValidateBasic(); err != nil {
-
-				fmt.Println("msg has validate basic error", requestTypeName, err)
 				return nil, err
 			}
 		}
@@ -205,18 +192,14 @@ func (msr *MsgServiceRouter) registerMsgServiceHandler(sd *grpc.ServiceDesc, met
 			}
 		}
 
-		fmt.Println("will run handler for ", requestTypeName)
-
 		// Call the method handler from the service description with the handler object.
 		// We don't do any decoding here because the decoding was already done.
 		res, err := methodHandler(handler, ctx, noopDecoder, interceptor)
-		fmt.Println("handler result for msg", res, err, msg)
 		if err != nil {
 			return nil, err
 		}
 
 		resMsg, ok := res.(proto.Message)
-		fmt.Println("resMsg", resMsg, ok)
 		if !ok {
 			return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidType, "Expecting proto.Message, got %T", resMsg)
 		}
