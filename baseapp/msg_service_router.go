@@ -128,6 +128,7 @@ func (msr *MsgServiceRouter) registerMsgServiceHandler(sd *grpc.ServiceDesc, met
 	// This approach is maybe a bit hacky, but less hacky than reflecting on the handler object itself.
 	// We use a no-op interceptor to avoid actually calling into the handler itself.
 	_, _ = methodHandler(nil, context.Background(), func(i interface{}) error {
+		fmt.Println("registerMsgServiceHandler empty invocation initial", i)
 		msg, ok := i.(sdk.Msg)
 		if !ok {
 			// We panic here because there is no other alternative and the app cannot be initialized correctly
@@ -178,6 +179,7 @@ func (msr *MsgServiceRouter) registerMsgServiceHandler(sd *grpc.ServiceDesc, met
 		fmt.Println("invoking msg handler", requestTypeName, msg)
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 		interceptor := func(goCtx context.Context, _ interface{}, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+			fmt.Println("interceptor", requestTypeName)
 			goCtx = context.WithValue(goCtx, sdk.SdkContextKey, ctx)
 			return handler(goCtx, msg)
 		}
@@ -210,7 +212,10 @@ func (msr *MsgServiceRouter) registerMsgServiceHandler(sd *grpc.ServiceDesc, met
 			return nil, err
 		}
 
+		fmt.Println("handler result", res)
+
 		resMsg, ok := res.(proto.Message)
+		fmt.Println("resMsg", resMsg, ok)
 		if !ok {
 			return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidType, "Expecting proto.Message, got %T", resMsg)
 		}
