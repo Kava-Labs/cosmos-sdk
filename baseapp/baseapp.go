@@ -1029,13 +1029,17 @@ func (app *BaseApp) runMsgs(ctx sdk.Context, msgs []sdk.Msg, msgsV2 []protov2.Me
 		fmt.Println("msg result", msgResult, err)
 		if err != nil {
 			if strings.Contains(sdk.MsgTypeURL(msg), "MsgUpdateParams") {
+				fmt.Println("msg is MsgUpdateParams", msg)
 				msgCons, is := msg.(*types.MsgUpdateParams)
+				fmt.Println("msgCons", msgCons)
 				if is {
 					fmt.Println("msgCons.Block", msgCons.Block)
 					fmt.Println("msgCons.Evidence", msgCons.Evidence)
 					fmt.Println("msgCons.Validator", msgCons.Validator)
 					fmt.Println("msgCons.Abci", msgCons.Abci)
 					fmt.Println("msgCons.Authority", msgCons.Authority)
+				} else {
+					fmt.Println("msg is not MsgUpdateParams", msg)
 				}
 			}
 			fmt.Println("handling message error occurred")
