@@ -3,7 +3,6 @@ package baseapp
 import (
 	"context"
 	"fmt"
-	"runtime/debug"
 	"strings"
 
 	gogogrpc "github.com/cosmos/gogoproto/grpc"
@@ -172,7 +171,7 @@ func (msr *MsgServiceRouter) registerMsgServiceHandler(sd *grpc.ServiceDesc, met
 
 	if strings.Contains(requestTypeName, "MsgUpdateParams") {
 		fmt.Println("registerMsgServiceHandler MsgUpdateParams", requestTypeName)
-		debug.PrintStack()
+		//debug.PrintStack()
 	}
 
 	msr.routes[requestTypeName] = func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
