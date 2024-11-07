@@ -1042,7 +1042,7 @@ func (app *BaseApp) runMsgs(ctx sdk.Context, msgs []sdk.Msg, msgsV2 []protov2.Me
 					fmt.Println("msg is not MsgUpdateParams", msg)
 				}
 			}
-			fmt.Println("handling message error occurred")
+			fmt.Println("handling message error occurred", sdk.MsgTypeURL(msg), msg)
 			debug.PrintStack()
 			return nil, errorsmod.Wrapf(err, "failed to execute message; message index: %d", i)
 		}
