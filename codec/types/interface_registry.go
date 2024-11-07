@@ -9,6 +9,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"reflect"
 	"runtime/debug"
+	"strings"
 )
 
 // AnyUnpacker is an interface which allows safely unpacking types packed
@@ -206,6 +207,11 @@ func (registry *interfaceRegistry) RegisterCustomTypeURL(iface interface{}, type
 // This function PANICs if different concrete types are registered under the
 // same typeURL.
 func (registry *interfaceRegistry) registerImpl(iface interface{}, typeURL string, impl proto.Message) {
+	if strings.Contains(typeURL, "/ibc") {
+		fmt.Println("registerImpl register impl", typeURL)
+		debug.PrintStack()
+	}
+
 	//fmt.Println("registering impl", typeURL)
 	//debug.PrintStack()
 	ityp := reflect.TypeOf(iface).Elem()
@@ -337,6 +343,9 @@ func (registry *interfaceRegistry) UnpackAny(any *Any, iface interface{}) error 
 // registered with RegisterInterface/RegisterImplementations, as well as those
 // registered with RegisterWithCustomTypeURL.
 func (registry *interfaceRegistry) Resolve(typeURL string) (proto.Message, error) {
+	if strings.Contains(typeURL, "/ibc") {
+		fmt.Println("Resolve resolve type url", typeURL)
+	}
 	typ, found := registry.typeURLMap[typeURL]
 	if !found {
 		return nil, fmt.Errorf("unable to resolve type URL %s", typeURL)
