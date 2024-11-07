@@ -3,6 +3,8 @@ package baseapp
 import (
 	"context"
 	"fmt"
+	"runtime/debug"
+	"strings"
 
 	gogogrpc "github.com/cosmos/gogoproto/grpc"
 	"github.com/cosmos/gogoproto/proto"
@@ -168,7 +170,13 @@ func (msr *MsgServiceRouter) registerMsgServiceHandler(sd *grpc.ServiceDesc, met
 		)
 	}
 
+	if strings.Contains(requestTypeName, "MsgUpdateParams") {
+		fmt.Println("registerMsgServiceHandler MsgUpdateParams", requestTypeName)
+		debug.PrintStack()
+	}
+
 	msr.routes[requestTypeName] = func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
+		fmt.Println("invoking msg handler", requestTypeName, msg)
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 		interceptor := func(goCtx context.Context, _ interface{}, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 			goCtx = context.WithValue(goCtx, sdk.SdkContextKey, ctx)
@@ -176,6 +184,7 @@ func (msr *MsgServiceRouter) registerMsgServiceHandler(sd *grpc.ServiceDesc, met
 		}
 
 		if m, ok := msg.(sdk.HasValidateBasic); ok {
+			fmt.Println("msg has validate basic", requestTypeName)
 			if err := m.ValidateBasic(); err != nil {
 				return nil, err
 			}
@@ -192,6 +201,8 @@ func (msr *MsgServiceRouter) registerMsgServiceHandler(sd *grpc.ServiceDesc, met
 				return nil, fmt.Errorf("circuit breaker disables execution of this message: %s", msgURL)
 			}
 		}
+
+		fmt.Println("will run handler for ", requestTypeName)
 
 		// Call the method handler from the service description with the handler object.
 		// We don't do any decoding here because the decoding was already done.
