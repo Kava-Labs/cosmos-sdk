@@ -160,7 +160,7 @@ func LegacyNewDecFromStr(str string) (LegacyDec, error) {
 	}
 
 	if len(str) == 0 {
-		fmt.Printf("decimal string cannot be empty got", str)
+		fmt.Printf("decimal string cannot be empty got 1", str)
 		debug.PrintStack()
 		return LegacyDec{}, ErrLegacyEmptyDecimalStr
 	}
@@ -172,10 +172,14 @@ func LegacyNewDecFromStr(str string) (LegacyDec, error) {
 	if len(strs) == 2 { // has a decimal place
 		lenDecs = len(strs[1])
 		if lenDecs == 0 || len(combinedStr) == 0 {
+			fmt.Printf("decimal string cannot be empty got 2", str)
+			debug.PrintStack()
 			return LegacyDec{}, ErrLegacyInvalidDecimalLength
 		}
 		combinedStr += strs[1]
 	} else if len(strs) > 2 {
+		fmt.Println("decimal string cannot be empty got 3", str)
+		debug.PrintStack()
 		return LegacyDec{}, ErrLegacyInvalidDecimalStr
 	}
 
