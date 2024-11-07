@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"testing"
@@ -159,6 +160,8 @@ func LegacyNewDecFromStr(str string) (LegacyDec, error) {
 	}
 
 	if len(str) == 0 {
+		fmt.Printf("decimal string cannot be empty got", str)
+		debug.PrintStack()
 		return LegacyDec{}, ErrLegacyEmptyDecimalStr
 	}
 
