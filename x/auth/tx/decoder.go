@@ -2,6 +2,7 @@ package tx
 
 import (
 	"fmt"
+	"runtime/debug"
 
 	"google.golang.org/protobuf/encoding/protowire"
 
@@ -38,9 +39,15 @@ func DefaultTxDecoder(cdc codec.Codec) sdk.TxDecoder {
 
 		var body tx.TxBody
 
+		fmt.Println("DefaultTxDecoder", string(raw.BodyBytes))
+
 		// allow non-critical unknown fields in TxBody
 		txBodyHasUnknownNonCriticals, err := unknownproto.RejectUnknownFields(raw.BodyBytes, &body, true, cdc.InterfaceRegistry())
+		fmt.Println("DefaultTxDecoder txBodyHasUnknownNonCriticals: ", txBodyHasUnknownNonCriticals, err)
 		if err != nil {
+			fmt.Println("DefaultTxDecoder err", err)
+			debug.PrintStack()
+
 			return nil, errorsmod.Wrap(sdkerrors.ErrTxDecode, err.Error())
 		}
 
