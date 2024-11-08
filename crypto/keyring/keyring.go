@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"sort"
 	"strings"
 
@@ -537,6 +538,8 @@ func (ks keystore) KeyByAddress(address sdk.Address) (*Record, error) {
 
 func wrapKeyNotFound(err error, msg string) error {
 	if err == keyring.ErrKeyNotFound {
+		fmt.Println("wrapKeyNotFound", msg, err)
+		debug.PrintStack()
 		return errorsmod.Wrap(sdkerrors.ErrKeyNotFound, msg)
 	}
 	return err
