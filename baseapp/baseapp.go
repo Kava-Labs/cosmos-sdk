@@ -3,12 +3,6 @@ package baseapp
 import (
 	"context"
 	"fmt"
-	"math"
-	"runtime/debug"
-	"sort"
-	"strconv"
-	"strings"
-
 	"github.com/cockroachdb/errors"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/crypto/tmhash"
@@ -17,6 +11,9 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	"golang.org/x/exp/maps"
 	protov2 "google.golang.org/protobuf/proto"
+	"math"
+	"sort"
+	"strconv"
 
 	"cosmossdk.io/core/header"
 	errorsmod "cosmossdk.io/errors"
@@ -1005,13 +1002,11 @@ func (app *BaseApp) runTx(mode execMode, txBytes []byte) (gInfo sdk.GasInfo, res
 // Handler does not exist for a given message route. Otherwise, a reference to a
 // Result is returned. The caller must not commit state if an error is returned.
 func (app *BaseApp) runMsgs(ctx sdk.Context, msgs []sdk.Msg, msgsV2 []protov2.Message, mode execMode) (*sdk.Result, error) {
-	fmt.Println("going to execute runMsgs")
 	events := sdk.EmptyEvents()
 	var msgResponses []*codectypes.Any
 
 	// NOTE: GasWanted is determined by the AnteHandler and GasUsed by the GasMeter.
 	for i, msg := range msgs {
-		fmt.Println("handling message", i, msg)
 		if mode != execModeFinalize && mode != execModeSimulate {
 			break
 		}
@@ -1021,26 +1016,9 @@ func (app *BaseApp) runMsgs(ctx sdk.Context, msgs []sdk.Msg, msgsV2 []protov2.Me
 			return nil, errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "no message handler found for %T", msg)
 		}
 
-		fmt.Println("msg handler", handler)
-
 		// ADR 031 request type routing
 		msgResult, err := handler(ctx, msg)
-		fmt.Println("msg result", msgResult, err)
 		if err != nil {
-			if strings.Contains(sdk.MsgTypeURL(msg), "MsgSubmitProposal") {
-				fmt.Println("msg is MsgSubmitProposal", msg)
-				//msgCons, is := msg.(*gov.MsgSubmitProposal)
-				//fmt.Println("msgCons", msgCons)
-				//if is {
-				//	fmt.Println("msgCons.Content", msgCons.Content)
-				//	fmt.Println("msgCons.Proposer", msgCons.Proposer)
-				//	fmt.Println("msgCons.InitialDeposit", msgCons.InitialDeposit)
-				//} else {
-				//	fmt.Println("msg is not MsgSubmitProposal", msg)
-				//}
-			}
-			fmt.Println("handling message error occurred", sdk.MsgTypeURL(msg), msg)
-			debug.PrintStack()
 			return nil, errorsmod.Wrapf(err, "failed to execute message; message index: %d", i)
 		}
 
