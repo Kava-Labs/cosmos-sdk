@@ -45,22 +45,26 @@ When using '--dry-run' a key name cannot be used, only a bech32 address.
 		Args: cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.Flags().Set(flags.FlagFrom, args[0])
+			fmt.Println("sending for bank", cmd.Flags())
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
 			}
 
 			toAddr, err := sdk.AccAddressFromBech32(args[1])
+			fmt.Println("toAddr", toAddr)
 			if err != nil {
 				return err
 			}
 
 			coins, err := sdk.ParseCoinsNormalized(args[2])
+			fmt.Println("coins", coins)
 			if err != nil {
 				return err
 			}
 
 			msg := types.NewMsgSend(clientCtx.GetFromAddress(), toAddr, coins)
+			fmt.Println("msg", msg)
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},

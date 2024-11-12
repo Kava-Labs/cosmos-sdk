@@ -2,10 +2,9 @@ package cli
 
 import (
 	"fmt"
+	"github.com/spf13/cobra"
 	"strconv"
 	"strings"
-
-	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -180,6 +179,7 @@ $ %s tx gov submit-legacy-proposal --title="Test Proposal" --description="My awe
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			fmt.Println("going to send legacy proposal", cmd.Flags())
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
