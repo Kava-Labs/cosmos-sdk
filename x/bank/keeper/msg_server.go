@@ -36,13 +36,13 @@ func (k msgServer) Send(goCtx context.Context, msg *types.MsgSend) (*types.MsgSe
 
 	if base, ok := k.Keeper.(BaseKeeper); ok {
 		from, err = base.ak.AddressCodec().StringToBytes(msg.FromAddress)
-		fmt.Println("Send from", from)
 		if err != nil {
+			fmt.Println("Send from", from, err)
 			return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid from address: %s", err)
 		}
 		to, err = base.ak.AddressCodec().StringToBytes(msg.ToAddress)
-		fmt.Println("Send to", to)
 		if err != nil {
+			fmt.Println("Send to", to, err)
 			return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid to address: %s", err)
 		}
 	} else {
@@ -69,8 +69,8 @@ func (k msgServer) Send(goCtx context.Context, msg *types.MsgSend) (*types.MsgSe
 	fmt.Println("Send k.SendCoins", from, to, msg.Amount)
 
 	err = k.SendCoins(ctx, from, to, msg.Amount)
-	fmt.Println("Send error sending coins", err)
 	if err != nil {
+		fmt.Println("Send error sending coins", err)
 		return nil, err
 	}
 

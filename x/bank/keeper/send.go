@@ -210,20 +210,20 @@ func (k BaseSendKeeper) SendCoins(ctx context.Context, fromAddr, toAddr sdk.AccA
 	fmt.Println("SendCoins for bank", fromAddr, toAddr, amt)
 	var err error
 	err = k.subUnlockedCoins(ctx, fromAddr, amt)
-	fmt.Println("SendCoins subUnlockedCoins", err)
 	if err != nil {
+		fmt.Println("SendCoins subUnlockedCoins", err)
 		return err
 	}
 
 	toAddr, err = k.sendRestriction.apply(ctx, fromAddr, toAddr, amt)
-	fmt.Println("SendCoins sendRestriction", err)
 	if err != nil {
+		fmt.Println("SendCoins sendRestriction", err)
 		return err
 	}
 
 	err = k.addCoins(ctx, toAddr, amt)
-	fmt.Println("SendCoins addCoins", err)
 	if err != nil {
+		fmt.Println("SendCoins addCoins", err)
 		return err
 	}
 
@@ -233,7 +233,6 @@ func (k BaseSendKeeper) SendCoins(ctx context.Context, fromAddr, toAddr sdk.AccA
 	// such as delegated fee messages.
 	accExists := k.ak.HasAccount(ctx, toAddr)
 	if !accExists {
-		fmt.Println("SendCoins account not exist", toAddr)
 		defer telemetry.IncrCounter(1, "new", "account")
 		k.ak.SetAccount(ctx, k.ak.NewAccountWithAddress(ctx, toAddr))
 	}
