@@ -952,6 +952,7 @@ func (ks keystore) MigrateAll() ([]*Record, error) {
 // 6. write the proto-encoded key back to the keyring
 func (ks keystore) migrate(key string) (*Record, error) {
 	if !strings.HasSuffix(key, infoSuffix) {
+		// TODO(boodyvo): check what exactly should be here
 		//key = infoKey(key)
 	}
 
