@@ -276,14 +276,8 @@ func readTxCommandFlags(clientCtx Context, flagSet *pflag.FlagSet) (Context, err
 	}
 
 	if clientCtx.From == "" || flagSet.Changed(flags.FlagFrom) {
-		fmt.Println("flagSet", flagSet)
 		from, _ := flagSet.GetString(flags.FlagFrom)
-		fmt.Println("from", from)
 		fromAddr, fromName, keyType, err := GetFromFields(clientCtx, clientCtx.Keyring, from)
-		fmt.Println("fromAddr", fromAddr)
-		fmt.Println("fromName", fromName)
-		fmt.Println("keyType", keyType)
-		fmt.Println("err", err)
 		if err != nil {
 			return clientCtx, fmt.Errorf("failed to convert address field to address: %w", err)
 		}

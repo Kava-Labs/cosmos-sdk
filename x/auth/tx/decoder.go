@@ -2,8 +2,6 @@ package tx
 
 import (
 	"fmt"
-	"runtime/debug"
-
 	"google.golang.org/protobuf/encoding/protowire"
 
 	errorsmod "cosmossdk.io/errors"
@@ -42,9 +40,6 @@ func DefaultTxDecoder(cdc codec.Codec) sdk.TxDecoder {
 		// allow non-critical unknown fields in TxBody
 		txBodyHasUnknownNonCriticals, err := unknownproto.RejectUnknownFields(raw.BodyBytes, &body, true, cdc.InterfaceRegistry())
 		if err != nil {
-			fmt.Println("DefaultTxDecoder err", err)
-			debug.PrintStack()
-
 			return nil, errorsmod.Wrap(sdkerrors.ErrTxDecode, err.Error())
 		}
 

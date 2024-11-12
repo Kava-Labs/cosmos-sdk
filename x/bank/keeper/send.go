@@ -207,23 +207,19 @@ func (k BaseSendKeeper) InputOutputCoins(ctx context.Context, input types.Input,
 // SendCoins transfers amt coins from a sending account to a receiving account.
 // An error is returned upon failure.
 func (k BaseSendKeeper) SendCoins(ctx context.Context, fromAddr, toAddr sdk.AccAddress, amt sdk.Coins) error {
-	fmt.Println("SendCoins for bank", fromAddr, toAddr, amt)
 	var err error
 	err = k.subUnlockedCoins(ctx, fromAddr, amt)
 	if err != nil {
-		fmt.Println("SendCoins subUnlockedCoins", err)
 		return err
 	}
 
 	toAddr, err = k.sendRestriction.apply(ctx, fromAddr, toAddr, amt)
 	if err != nil {
-		fmt.Println("SendCoins sendRestriction", err)
 		return err
 	}
 
 	err = k.addCoins(ctx, toAddr, amt)
 	if err != nil {
-		fmt.Println("SendCoins addCoins", err)
 		return err
 	}
 
