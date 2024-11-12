@@ -106,7 +106,6 @@ func (k Keeper) SetWithdrawAddr(ctx context.Context, delegatorAddr, withdrawAddr
 // withdraw rewards from a delegation
 func (k Keeper) WithdrawDelegationRewards(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) (sdk.Coins, error) {
 	val, err := k.stakingKeeper.Validator(ctx, valAddr)
-	fmt.Println("val", val, err)
 	if err != nil {
 		return nil, err
 	}

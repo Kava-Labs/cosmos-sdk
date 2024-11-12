@@ -7,7 +7,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"runtime/debug"
 	"sort"
 	"strings"
 
@@ -538,8 +537,6 @@ func (ks keystore) KeyByAddress(address sdk.Address) (*Record, error) {
 
 func wrapKeyNotFound(err error, msg string) error {
 	if err == keyring.ErrKeyNotFound {
-		fmt.Println("wrapKeyNotFound", msg, err)
-		debug.PrintStack()
 		return errorsmod.Wrap(sdkerrors.ErrKeyNotFound, msg)
 	}
 	return err
@@ -952,8 +949,7 @@ func (ks keystore) MigrateAll() ([]*Record, error) {
 // 6. write the proto-encoded key back to the keyring
 func (ks keystore) migrate(key string) (*Record, error) {
 	if !strings.HasSuffix(key, infoSuffix) {
-		// TODO(boodyvo): check what exactly should be here
-		//key = infoKey(key)
+		key = infoKey(key)
 	}
 
 	// 1. get the key.
