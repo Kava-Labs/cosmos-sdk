@@ -69,6 +69,7 @@ func (k msgServer) Send(goCtx context.Context, msg *types.MsgSend) (*types.MsgSe
 	fmt.Println("Send k.SendCoins", from, to, msg.Amount)
 
 	err = k.SendCoins(ctx, from, to, msg.Amount)
+	fmt.Println("Send error sending coins", err)
 	if err != nil {
 		return nil, err
 	}

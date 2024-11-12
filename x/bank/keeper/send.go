@@ -207,18 +207,22 @@ func (k BaseSendKeeper) InputOutputCoins(ctx context.Context, input types.Input,
 // SendCoins transfers amt coins from a sending account to a receiving account.
 // An error is returned upon failure.
 func (k BaseSendKeeper) SendCoins(ctx context.Context, fromAddr, toAddr sdk.AccAddress, amt sdk.Coins) error {
+	fmt.Println("SendCoins for bank", fromAddr, toAddr, amt)
 	var err error
 	err = k.subUnlockedCoins(ctx, fromAddr, amt)
+	fmt.Println("SendCoins subUnlockedCoins", err)
 	if err != nil {
 		return err
 	}
 
 	toAddr, err = k.sendRestriction.apply(ctx, fromAddr, toAddr, amt)
+	fmt.Println("SendCoins sendRestriction", err)
 	if err != nil {
 		return err
 	}
 
 	err = k.addCoins(ctx, toAddr, amt)
+	fmt.Println("SendCoins addCoins", err)
 	if err != nil {
 		return err
 	}
@@ -229,6 +233,7 @@ func (k BaseSendKeeper) SendCoins(ctx context.Context, fromAddr, toAddr sdk.AccA
 	// such as delegated fee messages.
 	accExists := k.ak.HasAccount(ctx, toAddr)
 	if !accExists {
+		fmt.Println("SendCoins account not exist", toAddr)
 		defer telemetry.IncrCounter(1, "new", "account")
 		k.ak.SetAccount(ctx, k.ak.NewAccountWithAddress(ctx, toAddr))
 	}
