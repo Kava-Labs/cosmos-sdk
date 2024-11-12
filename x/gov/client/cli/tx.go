@@ -212,6 +212,7 @@ $ %s tx gov submit-legacy-proposal --title="Test Proposal" --description="My awe
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			fmt.Println("got submit legacy proposal", cmd.Flags())
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
