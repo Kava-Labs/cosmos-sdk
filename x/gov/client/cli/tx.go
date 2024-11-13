@@ -212,37 +212,27 @@ $ %s tx gov submit-legacy-proposal --title="Test Proposal" --description="My awe
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Println("got submit legacy proposal", cmd.Flags())
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
 			}
-
-			fmt.Println("parsed client ctx")
 
 			proposal, err := parseSubmitLegacyProposal(cmd.Flags())
 			if err != nil {
 				return fmt.Errorf("failed to parse proposal: %w", err)
 			}
 
-			fmt.Println("parsed proposal")
-
 			amount, err := sdk.ParseCoinsNormalized(proposal.Deposit)
 			if err != nil {
 				return err
 			}
 
-			fmt.Println("parsed coins")
-
 			content, ok := v1beta1.ContentFromProposalType(proposal.Title, proposal.Description, proposal.Type)
 			if !ok {
 				return fmt.Errorf("failed to create proposal content: unknown proposal type %s", proposal.Type)
 			}
-			fmt.Println("created content", content)
 
 			msg, err := v1beta1.NewMsgSubmitProposal(content, amount, clientCtx.GetFromAddress())
-			fmt.Println("created msg", msg)
-			fmt.Println("created msg error", err)
 			if err != nil {
 				return fmt.Errorf("invalid message: %w", err)
 			}
