@@ -288,7 +288,7 @@ func (rs *Store) loadVersion(ver int64, upgrades *types.StoreUpgrades) error {
 	rs.stores = newStores
 
 	// load any pruned heights we missed from disk to be pruned on the next run
-	if err := rs.pruningManager.LoadPruningHeights(rs.db); err != nil {
+	if err := rs.pruningManager.LoadSnapshotHeights(rs.db); err != nil {
 		return err
 	}
 
@@ -339,7 +339,7 @@ func moveKVStoreData(oldDB types.KVStore, newDB types.KVStore) error {
 // If other strategy, this height is persisted until it is
 // less than <current height> - KeepRecent and <current height> % Interval == 0
 func (rs *Store) PruneSnapshotHeight(height int64) {
-	rs.pruningManager.HandleHeightSnapshot(height)
+	rs.pruningManager.HandleSnapshotHeight(height)
 }
 
 // SetInterBlockCache sets the Store's internal inter-block (persistent) cache.
@@ -594,38 +594,19 @@ func (rs *Store) GetKVStore(key types.StoreKey) types.KVStore {
 }
 
 func (rs *Store) handlePruning(version int64) error {
-	rs.pruningManager.HandleHeight(version - 1) // we should never prune the current version.
-	if !rs.pruningManager.ShouldPruneAtHeight(version) {
-		return nil
-	}
-	rs.logger.Info("prune start", "height", version)
+	pruneHeight := rs.pruningManager.GetPruningHeight(version)
 	defer rs.logger.Info("prune end", "height", version)
-	return rs.PruneStores(true, nil)
+	return rs.PruneStores(pruneHeight)
 }
 
-// PruneStores prunes the specific heights of the multi store.
-// If clearPruningManager is true, the pruning manager will return the pruning heights,
-// and they are appended to the pruningHeights to be pruned.
-func (rs *Store) PruneStores(clearPruningManager bool, pruningHeights []int64) (err error) {
-	if clearPruningManager {
-		heights, err := rs.pruningManager.GetFlushAndResetPruningHeights()
-		if err != nil {
-			return err
-		}
-
-		if len(heights) == 0 {
-			rs.logger.Debug("no heights to be pruned from pruning manager")
-		}
-
-		pruningHeights = append(pruningHeights, heights...)
-	}
-
-	if len(pruningHeights) == 0 {
-		rs.logger.Debug("no heights need to be pruned")
+// PruneStores prunes all history up to the specific height of the multi store.
+func (rs *Store) PruneStores(pruningHeight int64) (err error) {
+	if pruningHeight <= 0 {
+		rs.logger.Debug("pruning skipped, height is less than or equal to 0")
 		return nil
 	}
 
-	rs.logger.Debug("pruning store", "heights", pruningHeights)
+	rs.logger.Debug("pruning store", "height", pruningHeight)
 
 	for key, store := range rs.stores {
 		rs.logger.Debug("pruning store", "key", key) // Also log store.name (a private variable)?
@@ -638,7 +619,7 @@ func (rs *Store) PruneStores(clearPruningManager bool, pruningHeights []int64) (
 
 		store = rs.GetCommitKVStore(key)
 
-		err := store.(*iavl.Store).DeleteVersions(pruningHeights...)
+		err := store.(*iavl.Store).DeleteVersionsTo(pruningHeight)
 		if err == nil {
 			continue
 		}
@@ -1011,6 +992,68 @@ func (rs *Store) buildCommitInfo(version int64) *types.CommitInfo {
 	}
 }
 
+// DeleteLatestVersion finds a store with the given key name and deletes its latest version.
+// The store is deregistered from the rootmulti store. Calls to buildCommitInfo will not include it.
+// For stores with IAVL types, the deletion is written to the disk.
+// This is a destructive operation to be used with caution.
+// The reason it was added was to allow for rollbacks of upgrades that add modules.
+// Stores that do not exist in the version prior to upgrade can be forcibly deleted
+// before calling Rollback()
+func (rs *Store) DeleteLatestVersion(keyName string) error {
+	ver := GetLatestVersion(rs.db)
+	if ver == 0 {
+		return fmt.Errorf("unable to delete KVStore with key name %s, latest version is 0", keyName)
+	}
+
+	// Find the store key with the provided name
+	var key types.StoreKey = nil
+	for k := range rs.storesParams {
+		if k.Name() == keyName {
+			key = k
+			break
+		}
+	}
+	if key == nil {
+		return fmt.Errorf("no store found with key name %s", keyName)
+	}
+
+	// Get the KVStore for that key
+	cInfo, err := rs.GetCommitInfo(ver)
+	if err != nil {
+		return err
+	}
+	infos := make(map[string]types.StoreInfo)
+	for _, storeInfo := range cInfo.StoreInfos {
+		infos[storeInfo.Name] = storeInfo
+	}
+	commitID := rs.getCommitID(infos, key.Name())
+	store, err := rs.loadCommitStoreFromParams(key, commitID, rs.storesParams[key])
+	if err != nil {
+		return errors.Wrap(err, "failed to load store")
+	}
+
+	rs.logger.Debug("deleting KVStore", "key", key.Name(), "latest version", ver)
+
+	// for IAVL stores, commit the deletion of the latest version to disk.
+	if store.GetStoreType() == types.StoreTypeIAVL {
+		// unwrap the caching layer
+		store = rs.GetCommitKVStore(key)
+		if err := store.(*iavl.Store).DeleteVersionsFrom(ver); err != nil {
+			return errors.Wrapf(err, "failed to delete versions %d onwards of %s store", ver, key.Name())
+		}
+	}
+
+	// deregister store from the rootmulti store
+	// Any future buildCommitInfo will no longer include the store.
+	if _, ok := rs.stores[key]; ok {
+		delete(rs.stores, key)
+		delete(rs.storesParams, key)
+		delete(rs.keysByName, key.Name())
+	}
+
+	return nil
+}
+
 // RollbackToVersion delete the versions after `target` and update the latest version.
 func (rs *Store) RollbackToVersion(target int64) error {
 	if target <= 0 {
@@ -1022,14 +1065,10 @@ func (rs *Store) RollbackToVersion(target int64) error {
 			// If the store is wrapped with an inter-block cache, we must first unwrap
 			// it to get the underlying IAVL store.
 			store = rs.GetCommitKVStore(key)
-			var err error
-			if rs.lazyLoading {
-				_, err = store.(*iavl.Store).LazyLoadVersionForOverwriting(target)
-			} else {
-				_, err = store.(*iavl.Store).LoadVersionForOverwriting(target)
-			}
+			rs.logger.Debug("loading version %d for store with key %s (%s)\n", target, key.String(), key.Name())
+			_, err := store.(*iavl.Store).LoadVersionForOverwriting(target)
 			if err != nil {
-				return err
+				return errors.Wrapf(err, "failed loading version %d for store with key name '%s'", target, key.Name())
 			}
 		}
 	}
